@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { CHARACTERS, WEAPONS } from "./data"; // Importing your data
-
-// ... (Keep your C constant definitions, ELEMENTS, WEAPON_TYPES, and helper functions here)
+import { CHARACTERS, WEAPONS } from "./data";  Importing your data
+ 
+ (Keep your C constant definitions, ELEMENTS, WEAPON_TYPES, and helper functions here)
 
 function Portrait({ character, size = "w-full aspect-square" }) {
   return (
@@ -27,7 +27,7 @@ function Portrait({ character, size = "w-full aspect-square" }) {
   );
 }
 
-// ... (Keep your rest of the UI components like RadialPity, ElementBadge, etc.)
+ (div>Keep your rest of the UI components like RadialPity, ElementBadge, etc.<div)
 
 export default function JinKunInventory() {
   // ... your existing state (fontsReady, activeTab, etc.)
@@ -73,7 +73,7 @@ return (
   );
 }
 
-  // ... (Your existing state management and logic from the video code)
+  (/*Your existing state management and logic from the video code)
 
   
     <div className="min-h-screen relative overflow-hidden text-ivory">
