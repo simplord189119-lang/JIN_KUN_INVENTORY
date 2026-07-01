@@ -50,25 +50,23 @@ function App() {
           </div>
         )}
 
-        {(activeTab === 'resonators' || activeTab === 'weapons') && (
-          <div className="grid grid-cols-1 gap-4">
-            {wuwaData.filter(item => activeTab === 'resonators' ? item.rarity : item.signatureWeapon).map(item => (
-              <div key={item.id} className="bg-gray-900 p-4 rounded flex justify-between items-center border border-gray-800">
-                <div>
-                  <h3 className="font-bold">{item.name}</h3>
-                  <p className="text-xs text-gray-400">{activeTab === 'resonators' ? item.element : item.weaponType}</p>
-                </div>
-                <div className="flex gap-2">
-                  <button className="bg-gray-700 px-3 py-1 rounded text-xs">MUST</button>
-                  <button className="bg-gray-700 px-3 py-1 rounded text-xs">HIGH</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </main>
-    </div>
-  );
-}
-
-export default App;
+        {(activeTab === 'resonators') && (
+  <div className="grid grid-cols-1 gap-4">
+    {wuwaData.filter(item => item.rarity).map(item => (
+      <div key={item.id} className="bg-gray-900 p-4 rounded flex items-center border border-gray-800">
+        {/* Character Image */}
+        <img src={item.image} alt={item.name} className="w-16 h-16 rounded-full border border-cyan-400 mr-4" />
+        
+        <div className="flex-grow">
+          <h3 className="font-bold">{item.name}</h3>
+          <p className="text-xs text-gray-400">{item.element} / {item.weaponType}</p>
+        </div>
+        
+        <div className="flex gap-2">
+          <button className="bg-gray-700 px-3 py-1 rounded text-xs">MUST</button>
+          <button className="bg-gray-700 px-3 py-1 rounded text-xs">HIGH</button>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
