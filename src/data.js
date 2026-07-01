@@ -1,26 +1,62 @@
 export const wuwaData = [
-  {
-    id: 'jinhsi',
-    name: 'Jinhsi',
-    element: 'Spectro',
-    weaponType: 'Broadblade',
-    signatureWeapon: 'Ages of Harvest',
-    rarity: 5
-  },
-  {
-    id: 'changli',
-    name: 'Changli',
-    element: 'Fusion',
-    weaponType: 'Sword',
-    signatureWeapon: 'Blazing Brilliance',
-    rarity: 5
-  },
-  {
-    id: 'camellya',
-    name: 'Camellya',
-    element: 'Havoc',
-    weaponType: 'Sword', 
-    signatureWeapon: 'Red String', 
-    rarity: 5
-  }
+  // --- 1.X RELEASED RESONATORS ---
+  { id: 'rover-spectro', name: 'Rover (Spectro)', element: 'Spectro', weaponType: 'Sword', signatureWeapon: 'Emerald of Genesis', rarity: 5 },
+  { id: 'rover-havoc', name: 'Rover (Havoc)', element: 'Havoc', weaponType: 'Sword', signatureWeapon: 'Emerald of Genesis', rarity: 5 },
+  { id: 'jiyan', name: 'Jiyan', element: 'Aero', weaponType: 'Broadblade', signatureWeapon: 'Verdant Summit', rarity: 5 },
+  { id: 'yinlin', name: 'Yinlin', element: 'Electro', weaponType: 'Rectifier', signatureWeapon: 'Stringmaster', rarity: 5 },
+  { id: 'calcharo', name: 'Calcharo', element: 'Electro', weaponType: 'Broadblade', signatureWeapon: 'Lustrous Razor', rarity: 5 },
+  { id: 'encore', name: 'Encore', element: 'Fusion', weaponType: 'Rectifier', signatureWeapon: 'Cosmic Ripples', rarity: 5 },
+  { id: 'jianxin', name: 'Jianxin', element: 'Aero', weaponType: 'Gauntlets', signatureWeapon: 'Abyss Surges', rarity: 5 },
+  { id: 'lingyang', name: 'Lingyang', element: 'Glacio', weaponType: 'Gauntlets', signatureWeapon: 'Abyss Surges', rarity: 5 },
+  { id: 'verina', name: 'Verina', element: 'Spectro', weaponType: 'Rectifier', signatureWeapon: 'Cosmic Ripples', rarity: 5 },
+  { id: 'jinhsi', name: 'Jinhsi', element: 'Spectro', weaponType: 'Broadblade', signatureWeapon: 'Ages of Harvest', rarity: 5 },
+  { id: 'changli', name: 'Changli', element: 'Fusion', weaponType: 'Sword', signatureWeapon: 'Blazing Brilliance', rarity: 5 },
+  { id: 'zhezhi', name: 'Zhezhi', element: 'Glacio', weaponType: 'Rectifier', signatureWeapon: 'Rime-Draped Sprouts', rarity: 5 },
+  { id: 'xiangli-yao', name: 'Xiangli Yao', element: 'Electro', weaponType: 'Gauntlets', signatureWeapon: 'Verity\'s Handle', rarity: 5 },
+  { id: 'the-shorekeeper', name: 'The Shorekeeper', element: 'Spectro', weaponType: 'Rectifier', signatureWeapon: 'Stellar Symphony', rarity: 5 },
+  { id: 'camellya', name: 'Camellya', element: 'Havoc', weaponType: 'Sword', signatureWeapon: 'Red String', rarity: 5 },
+
+  // --- 4-STAR RESONATORS ---
+  { id: 'yangyang', name: 'Yangyang', element: 'Aero', weaponType: 'Sword', signatureWeapon: 'Commando of Conviction', rarity: 4 },
+  { id: 'chixia', name: 'Chixia', element: 'Fusion', weaponType: 'Pistols', signatureWeapon: 'Undying Flame', rarity: 4 },
+  { id: 'baizhi', name: 'Baizhi', element: 'Glacio', weaponType: 'Rectifier', signatureWeapon: 'Comet Flare', rarity: 4 },
+  { id: 'sanhua', name: 'Sanhua', element: 'Glacio', weaponType: 'Sword', signatureWeapon: 'Commando of Conviction', rarity: 4 },
+  { id: 'danjin', name: 'Danjin', element: 'Havoc', weaponType: 'Sword', signatureWeapon: 'Lumingloss', rarity: 4 },
+  { id: 'mortefi', name: 'Mortefi', element: 'Fusion', weaponType: 'Pistols', signatureWeapon: 'Novaburst', rarity: 4 },
+  { id: 'aalto', name: 'Aalto', element: 'Aero', weaponType: 'Pistols', signatureWeapon: 'Hollow Mirage', rarity: 4 },
+  { id: 'taoqi', name: 'Taoqi', element: 'Havoc', weaponType: 'Broadblade', signatureWeapon: 'Dauntless Evernight', rarity: 4 },
+  { id: 'yuanwu', name: 'Yuanwu', element: 'Electro', weaponType: 'Gauntlets', signatureWeapon: 'Amity Accord', rarity: 4 },
+  { id: 'youhu', name: 'Youhu', element: 'Glacio', weaponType: 'Gauntlets', signatureWeapon: 'Marcato', rarity: 4 },
+  { id: 'lumi', name: 'Lumi', element: 'Electro', weaponType: 'Sword', signatureWeapon: 'Lumingloss', rarity: 4 },
+  { id: 'buling', name: 'Buling', element: 'Electro', weaponType: 'Rectifier', signatureWeapon: 'Jinzhou Keeper', rarity: 4 },
+
+  // --- 2.X & 3.X CONFIRMED PLAYABLES ---
+  { id: 'carlotta', name: 'Carlotta', element: 'Glacio', weaponType: 'Pistols', signatureWeapon: 'Twilight Dance', rarity: 5 },
+  { id: 'roccia', name: 'Roccia', element: 'Havoc', weaponType: 'Gauntlets', signatureWeapon: 'Tragicomedy', rarity: 5 },
+  { id: 'phoebe', name: 'Phoebe', element: 'Spectro', weaponType: 'Rectifier', signatureWeapon: 'Luminous Hymn', rarity: 5 },
+  { id: 'brant', name: 'Brant', element: 'Fusion', weaponType: 'Sword', signatureWeapon: 'Ignition Blade', rarity: 5 },
+  { id: 'cantarella', name: 'Cantarella', element: 'Havoc', weaponType: 'Rectifier', signatureWeapon: 'Whispers of Sirens', rarity: 5 },
+  { id: 'zani', name: 'Zani', element: 'Spectro', weaponType: 'Gauntlets', signatureWeapon: 'Blazing Justice', rarity: 5 },
+  { id: 'ciaccona', name: 'Ciaccona', element: 'Electro', weaponType: 'Gauntlets', signatureWeapon: 'Thunder Strike', rarity: 5 },
+  { id: 'augusta', name: 'Augusta', element: 'Glacio', weaponType: 'Sword', signatureWeapon: 'Winter\'s Bite', rarity: 5 },
+  { id: 'iuno', name: 'Iuno', element: 'Spectro', weaponType: 'Broadblade', signatureWeapon: 'Radiant Edge', rarity: 5 },
+  { id: 'galbrena', name: 'Galbrena', element: 'Fusion', weaponType: 'Gauntlets', signatureWeapon: 'Magma Fists', rarity: 5 },
+  { id: 'qiuyuan', name: 'Qiuyuan', element: 'Aero', weaponType: 'Sword', signatureWeapon: 'Zephyr Blade', rarity: 5 },
+  { id: 'chisa', name: 'Chisa', element: 'Havoc', weaponType: 'Broadblade', signatureWeapon: 'Kumokiri', rarity: 5 },
+  { id: 'lynae', name: 'Lynae', element: 'Glacio', weaponType: 'Rectifier', signatureWeapon: 'Crystal Tear', rarity: 5 },
+  { id: 'mornye', name: 'Mornye', element: 'Havoc', weaponType: 'Broadblade', signatureWeapon: 'Eclipse', rarity: 5 },
+  { id: 'aemeath', name: 'Aemeath', element: 'Fusion', weaponType: 'Sword', signatureWeapon: 'Everbright Polestar', rarity: 5 },
+  { id: 'luuk-herssen', name: 'Luuk Herssen', element: 'Spectro', weaponType: 'Pistols', signatureWeapon: 'Solar Flare', rarity: 5 },
+  { id: 'sigrika', name: 'Sigrika', element: 'Aero', weaponType: 'Gauntlets', signatureWeapon: 'Windbreaker', rarity: 5 },
+  { id: 'hiyuki', name: 'Hiyuki', element: 'Glacio', weaponType: 'Sword', signatureWeapon: 'Snowfall', rarity: 5 },
+  { id: 'denia', name: 'Denia', element: 'Electro', weaponType: 'Broadblade', signatureWeapon: 'Storm Surge', rarity: 5 },
+  { id: 'cartethyia', name: 'Cartethyia', element: 'Spectro', weaponType: 'Rectifier', signatureWeapon: 'Glorious Era', rarity: 5 },
+  { id: 'lupa', name: 'Lupa', element: 'Fusion', weaponType: 'Broadblade', signatureWeapon: 'Crimson Howl', rarity: 5 },
+  { id: 'suisui', name: 'Suisui', element: 'Aero', weaponType: 'Rectifier', signatureWeapon: 'Azure Gale', rarity: 5 },
+  { id: 'yangyang-xuanling', name: 'Yangyang: Xuanling', element: 'Electro', weaponType: 'Sword', signatureWeapon: 'Thunder\'s Resolve', rarity: 5 },
+  
+  // --- COLLAB UNITS ---
+  { id: 'lucy', name: 'Lucy', element: 'Spectro', weaponType: 'Pistols', signatureWeapon: 'Cyber Chrome', rarity: 5 },
+  { id: 'rebecca', name: 'Rebecca', element: 'Glacio', weaponType: 'Rectifier', signatureWeapon: 'Data Stream', rarity: 5 },
+  { id: 'lucilla', name: 'Lucilla', element: 'Havoc', weaponType: 'Sword', signatureWeapon: 'Shadow Stitch', rarity: 5 }
 ];
