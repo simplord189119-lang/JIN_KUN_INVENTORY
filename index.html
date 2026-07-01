@@ -3,10 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>JIN_KUN_INVENTORY</title>
+    <title>JIN_STRIKE.INVENTORY</title>
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      window.onerror = function(message, source, lineno, colno, error) {
+        alert("Error: " + message + "\nLine: " + lineno + "\nSource: " + source);
+        return false;
+      };
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
