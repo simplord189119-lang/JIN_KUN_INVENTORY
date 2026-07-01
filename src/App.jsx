@@ -63,7 +63,13 @@ export default function JinKunInventory() {
   // --- END OF PASTE --
 
   return (
-    // ... your return statement
+    // Corrected return statement structure
+return (
+  <>
+    {/* Your UI code and content go here */}
+  </>
+);
+
   );
 }
 
