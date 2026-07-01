@@ -1,5 +1,5 @@
 
-export const CHARACTERS = [export const CHARACTERS = [
+export const CHARACTERS = [
   // Glacio
   { id: 'baizhi', name: 'Baizhi', element: 'Glacio', weaponType: 'Rectifier', rarity: 4, image: '' },
   { id: 'carlotta', name: 'Carlotta', element: 'Glacio', weaponType: 'Pistols', rarity: 5, image: '' },
