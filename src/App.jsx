@@ -69,7 +69,7 @@ export default function JinKunInventory() {
 
   // ... (Your existing state management and logic from the video code)
 
-  return (
+  
     <div className="min-h-screen relative overflow-hidden text-ivory">
       <Backdrop />/* --- NAVIGATION ADDITION --- */
 <div className="flex gap-3 px-4 py-2 border-b border-white/10 mb-4 justify-between">
@@ -80,9 +80,7 @@ export default function JinKunInventory() {
    <div className="flex gap-2">
       <button onClick={handleBgChange} className="text-[10px] uppercase text-starlightDim">BG</button>
       <button onClick={handleLogin} className="text-[10px] uppercase text-goldDim">{isLoggedIn ? 'Synced' : 'Login'}</button>
- 
 
-<button onClick={() => { localStorage.removeItem("customBg"); setBgImage(""); }} className="text-[10px] uppercase text-red-500">Reset BG</button>
   </div>
 </div>
 
