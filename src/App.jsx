@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { CHARACTERS, WEAPONS } from "./data";
 
 function Backdrop() {
   return <div className="fixed inset-0 bg-slate-900 -z-10" />;
 }
+
 
 export default function JinKunInventory() {
   const [bgImage, setBgImage] = useState(() => localStorage.getItem("customBg") || "");
