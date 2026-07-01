@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from "react";
 
+function Backdrop() {
+  return <div className="fixed inset-0 bg-slate-900 -z-10" />;
+}
+
 export default function JinKunInventory() {
   const [bgImage, setBgImage] = useState(() => localStorage.getItem("customBg") || "");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -32,6 +36,7 @@ export default function JinKunInventory() {
 
   return (
     <div className="min-h-screen relative overflow-hidden text-ivory">
+
       <Backdrop />
 
       {/* Navigation Bar */}
