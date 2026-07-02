@@ -15,7 +15,7 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "./firebase.js";
 import { CHARACTERS } from "./data.js";
 import { WEAPONS } from "./weaponsData.js";
-import { CHARACTER_BUILDS_BY_NAME, WEAPON_INFO_BY_NAME } from "./buildData.js";
+import { } from "./buildData.js";
 
 /* ============================================================================
    DESIGN TOKENS — starlight blues, ivory whites, gilt-thorn gold, a whisper
