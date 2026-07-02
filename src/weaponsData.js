@@ -45,7 +45,7 @@ export const WEAPONS = [
   { id: 'sig_sigrika', name: 'Solsworn Ciphers', type: 'Gauntlets', rarity: 5, image: '' }, // Sigrika
 
 
-  { id: 'sig_rover_aero', name: "Bloodpact's Pledge", type: 'Pistols', rarity: 5, image: '' }, // Rover (Aero)
+  { id: 'sig_rover_aero', name: "Bloodpact's Pledge", type: 'sword', rarity: 5, image: '' }, // Rover (Aero)
 
 
 
