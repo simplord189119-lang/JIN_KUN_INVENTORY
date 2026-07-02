@@ -6,7 +6,13 @@ import {
   LogOut, LogIn, UserPlus, Loader2, Info, Image as ImageIcon, Eye, EyeOff,
   Trash2, Plus, Search,
 } from "lucide-react";
+import {
+  createUserWithEmailAndPassword, signInWithEmailAndPassword,
+  signOut, onAuthStateChanged,
+} from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
+import { auth, db } from "./firebase.js";
 import { CHARACTERS } from "./data.js";
 import { WEAPONS } from "./weaponsData.js";
 
@@ -84,44 +90,22 @@ function initials(name) {
   return (name || "?").replace(/\(.*?\)/g, "").trim().split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
 }
 
-async function storageGet(key, shared) {
-  try {
-    const r = await window.storage.get(key, shared);
-    return r ? r.value : null;
-  } catch {
-    return null;
-  }
+/* Firebase Auth's built-in email/password provider requires a real email
+   shape, but the app's UX is "username, not email". We synthesize a stable,
+   fake-domain email from the username so people never have to think about
+   email at all — Firebase still does all the real credential checking. */
+const USERNAME_DOMAIN = "users.jinkuninventory.app";
+function usernameToEmail(username) {
+  return `${slugify(username)}@${USERNAME_DOMAIN}`;
 }
-async function storageSet(key, value, shared) {
-  try {
-    const r = await window.storage.set(key, value, shared);
-    return !!r;
-  } catch {
-    return false;
-  }
-}
-async function storageDelete(key, shared) {
-  try {
-    await window.storage.delete(key, shared);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/* SHA-256 password hashing (client-side). This gives real credential
-   checking (no plaintext passwords stored) without a server — good enough
-   for a personal tracker, but it's not a substitute for a proper auth
-   backend if this ever needs to resist a serious attacker. */
-async function sha256Hex(str) {
-  const enc = new TextEncoder().encode(str);
-  const buf = await crypto.subtle.digest("SHA-256", enc);
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
-}
-function randomHex(bytes = 16) {
-  const arr = new Uint8Array(bytes);
-  crypto.getRandomValues(arr);
-  return Array.from(arr).map(b => b.toString(16).padStart(2, "0")).join("");
+function friendlyAuthError(err) {
+  const code = err?.code || "";
+  if (code.includes("email-already-in-use")) return "That username is already taken.";
+  if (code.includes("invalid-credential") || code.includes("wrong-password") || code.includes("user-not-found")) return "Incorrect username or password.";
+  if (code.includes("weak-password")) return "Password must be at least 6 characters.";
+  if (code.includes("too-many-requests")) return "Too many attempts — wait a bit and try again.";
+  if (code.includes("invalid-email")) return "That username has characters that don't convert cleanly — try letters/numbers only.";
+  return "Something went wrong. Try again.";
 }
 
 function parseConveneLink(raw) {
@@ -393,6 +377,8 @@ export default function App() {
 
   // --- auth ---
   const [username, setUsername] = useState(null);
+  const [uid, setUid] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState("login"); // 'login' | 'signup'
   const [authUsername, setAuthUsername] = useState("");
@@ -428,6 +414,12 @@ export default function App() {
   // --- search filters ---
   const [charSearch, setCharSearch] = useState("");
   const [weaponSearch, setWeaponSearch] = useState("");
+  const [charElementFilter, setCharElementFilter] = useState("all");
+  const [charWeaponFilter, setCharWeaponFilter] = useState("all");
+  const [weaponTypeFilter, setWeaponTypeFilter] = useState("all");
+
+  // --- dashboard priority view ---
+  const [dashPriorityTier, setDashPriorityTier] = useState("must");
 
   const saveTimer = useRef(null);
   const skipNextSave = useRef(false);
@@ -447,9 +439,9 @@ export default function App() {
   }, []);
 
   /* ---------------------------------------------------------------------
-     REAL AUTH — username/password accounts backed by shared persistent
-     storage. Passwords are salted + SHA-256 hashed before they ever touch
-     storage; only the hash is saved, never the plaintext password.
+     REAL AUTH — Firebase Authentication (email/password under the hood,
+     synthesized from the username so people never type an email). Session
+     persists automatically across refreshes via onAuthStateChanged below.
   --------------------------------------------------------------------- */
   async function handleSignup() {
     const uname = authUsername.trim();
@@ -460,23 +452,26 @@ export default function App() {
     setAuthBusy(true);
     setAuthError("");
     try {
-      const existing = await storageGet(`jinkun_user:${slug}`, true);
-      if (existing) { setAuthError("That username is taken."); setAuthBusy(false); return; }
-      const salt = randomHex();
-      const hash = await sha256Hex(salt + authPassword);
-      await storageSet(`jinkun_user:${slug}`, JSON.stringify({ username: uname, salt, hash, createdAt: Date.now() }), true);
-      await storageSet(`jinkun_data:${slug}`, JSON.stringify({ characterPriorities: {}, weaponPriorities: {}, pullHistory: [] }), true);
+      const cred = await createUserWithEmailAndPassword(auth, usernameToEmail(uname), authPassword);
+      await setDoc(doc(db, "users", cred.user.uid), {
+        username: uname,
+        characterPriorities: {},
+        weaponPriorities: {},
+        pullHistory: [],
+        wallpaper: null,
+      });
       skipNextSave.current = true;
       setCharacterPriorities({});
       setWeaponPriorities({});
       setPullHistory([]);
       setWallpaperUrl(null);
       setUsername(uname);
+      setUid(cred.user.uid);
       setAuthOpen(false);
       resetAuthFields();
       notify(`Account created — welcome, ${uname}.`);
-    } catch {
-      setAuthError("Something went wrong creating that account. Try again.");
+    } catch (err) {
+      setAuthError(friendlyAuthError(err));
     } finally {
       setAuthBusy(false);
     }
@@ -489,25 +484,21 @@ export default function App() {
     setAuthBusy(true);
     setAuthError("");
     try {
-      const raw = await storageGet(`jinkun_user:${slug}`, true);
-      if (!raw) { setAuthError("No account with that username."); setAuthBusy(false); return; }
-      const rec = JSON.parse(raw);
-      const hash = await sha256Hex(rec.salt + authPassword);
-      if (hash !== rec.hash) { setAuthError("Incorrect password."); setAuthBusy(false); return; }
-      const dataRaw = await storageGet(`jinkun_data:${slug}`, true);
-      const data = dataRaw ? JSON.parse(dataRaw) : { characterPriorities: {}, weaponPriorities: {}, pullHistory: [] };
-      const wp = await storageGet(`jinkun_wallpaper:${slug}`, true);
+      const cred = await signInWithEmailAndPassword(auth, usernameToEmail(uname), authPassword);
+      const snap = await getDoc(doc(db, "users", cred.user.uid));
+      const data = snap.exists() ? snap.data() : { characterPriorities: {}, weaponPriorities: {}, pullHistory: [], wallpaper: null };
       skipNextSave.current = true;
       setCharacterPriorities(data.characterPriorities || {});
       setWeaponPriorities(data.weaponPriorities || {});
       setPullHistory(data.pullHistory || []);
-      setWallpaperUrl(wp || null);
-      setUsername(rec.username);
+      setWallpaperUrl(data.wallpaper || null);
+      setUsername(data.username || uname);
+      setUid(cred.user.uid);
       setAuthOpen(false);
       resetAuthFields();
-      notify(`Welcome back, ${rec.username}.`);
-    } catch {
-      setAuthError("Couldn't log in right now. Try again.");
+      notify(`Welcome back, ${data.username || uname}.`);
+    } catch (err) {
+      setAuthError(friendlyAuthError(err));
     } finally {
       setAuthBusy(false);
     }
@@ -521,8 +512,10 @@ export default function App() {
     setAuthShowPw(false);
   }
 
-  function handleLogout() {
+  async function handleLogout() {
+    await signOut(auth);
     setUsername(null);
+    setUid(null);
     setCharacterPriorities({});
     setWeaponPriorities({});
     setPullHistory([]);
@@ -530,26 +523,49 @@ export default function App() {
     notify("Signed out. Switched to guest mode (not saved).");
   }
 
+  // restore session on page load/refresh (Firebase keeps you signed in)
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const snap = await getDoc(doc(db, "users", user.uid));
+          const data = snap.exists() ? snap.data() : { characterPriorities: {}, weaponPriorities: {}, pullHistory: [], wallpaper: null };
+          skipNextSave.current = true;
+          setCharacterPriorities(data.characterPriorities || {});
+          setWeaponPriorities(data.weaponPriorities || {});
+          setPullHistory(data.pullHistory || []);
+          setWallpaperUrl(data.wallpaper || null);
+          setUsername(data.username || null);
+          setUid(user.uid);
+        } catch {
+          notify("Couldn't reach the cloud database — check your connection.", "error");
+        }
+      }
+      setAuthLoading(false);
+    });
+    return () => unsub();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // debounced autosave of priorities + pull history for logged-in users
   useEffect(() => {
-    if (!username) return;
+    if (!uid) return;
     if (skipNextSave.current) { skipNextSave.current = false; return; }
     clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
-      const slug = slugify(username);
-      const ok = await storageSet(
-        `jinkun_data:${slug}`,
-        JSON.stringify({ characterPriorities, weaponPriorities, pullHistory }),
-        true
-      );
-      if (!ok) notify("Cloud sync failed — will retry on next change.", "error");
+      try {
+        await setDoc(doc(db, "users", uid), { characterPriorities, weaponPriorities, pullHistory }, { merge: true });
+      } catch {
+        notify("Cloud sync failed — will retry on next change.", "error");
+      }
     }, 900);
     return () => clearTimeout(saveTimer.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [characterPriorities, weaponPriorities, pullHistory, username]);
+  }, [characterPriorities, weaponPriorities, pullHistory, uid]);
 
   /* ---------------------------------------------------------------------
-     WALLPAPER
+     WALLPAPER — compressed hard enough to comfortably fit inside a
+     Firestore document (1MiB limit, shared with priorities + history).
   --------------------------------------------------------------------- */
   async function handleWallpaperFile(e) {
     const file = e.target.files?.[0];
@@ -559,17 +575,16 @@ export default function App() {
     if (file.size > 20 * 1024 * 1024) { notify("That image is too large (max 20MB).", "error"); return; }
     setWallpaperBusy(true);
     try {
-      const dataUrl = await compressImageFile(file);
+      const dataUrl = await compressImageFile(file, 1200, 0.6);
       setWallpaperUrl(dataUrl);
-      if (username) {
-        const ok = await storageSet(`jinkun_wallpaper:${slugify(username)}`, dataUrl, true);
-        if (!ok) notify("Wallpaper set, but couldn't save it to your account.", "error");
-        else notify("Wallpaper updated.");
+      if (uid) {
+        await setDoc(doc(db, "users", uid), { wallpaper: dataUrl }, { merge: true });
+        notify("Wallpaper updated.");
       } else {
         notify("Wallpaper set for this session — log in to keep it.");
       }
     } catch (err) {
-      notify(err.message || "Couldn't process that image.", "error");
+      notify(err.message || "Couldn't process that image — try a smaller photo.", "error");
     } finally {
       setWallpaperBusy(false);
     }
@@ -577,7 +592,9 @@ export default function App() {
 
   async function handleRemoveWallpaper() {
     setWallpaperUrl(null);
-    if (username) await storageDelete(`jinkun_wallpaper:${slugify(username)}`, true);
+    if (uid) {
+      try { await setDoc(doc(db, "users", uid), { wallpaper: null }, { merge: true }); } catch { /* non-fatal */ }
+    }
     notify("Wallpaper reset to default.");
   }
 
@@ -663,22 +680,29 @@ export default function App() {
     return out;
   }, [pullHistory]);
 
-  const mustPullChars = useMemo(
-    () => CHARACTERS.filter(c => characterPriorities[c.id] === "must"),
-    [characterPriorities]
+  const priorityChars = useMemo(
+    () => CHARACTERS.filter(c => characterPriorities[c.id] === dashPriorityTier),
+    [characterPriorities, dashPriorityTier]
   );
-  const mustPullWeapons = useMemo(
-    () => WEAPONS.filter(w => weaponPriorities[w.id] === "must"),
-    [weaponPriorities]
+  const priorityWeapons = useMemo(
+    () => WEAPONS.filter(w => weaponPriorities[w.id] === dashPriorityTier),
+    [weaponPriorities, dashPriorityTier]
   );
 
   const filteredChars = useMemo(
-    () => CHARACTERS.filter(c => c.name.toLowerCase().includes(charSearch.toLowerCase())),
-    [charSearch]
+    () => CHARACTERS.filter(c =>
+      c.name.toLowerCase().includes(charSearch.toLowerCase()) &&
+      (charElementFilter === "all" || c.element === charElementFilter) &&
+      (charWeaponFilter === "all" || c.weaponType === charWeaponFilter)
+    ),
+    [charSearch, charElementFilter, charWeaponFilter]
   );
   const filteredWeapons = useMemo(
-    () => WEAPONS.filter(w => w.name.toLowerCase().includes(weaponSearch.toLowerCase())),
-    [weaponSearch]
+    () => WEAPONS.filter(w =>
+      w.name.toLowerCase().includes(weaponSearch.toLowerCase()) &&
+      (weaponTypeFilter === "all" || w.type === weaponTypeFilter)
+    ),
+    [weaponSearch, weaponTypeFilter]
   );
 
   const fiftyFiftyPulls = useMemo(
@@ -696,6 +720,14 @@ export default function App() {
   /* ---------------------------------------------------------------------
      RENDER
   --------------------------------------------------------------------- */
+  if (authLoading) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center" style={{ background: C.void, color: C.ivory }}>
+        <Loader2 size={22} className="animate-spin" color={C.gold} />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen w-full" style={{ fontFamily: "'Manrope', sans-serif", color: C.ivory }}>
       <Backdrop wallpaperUrl={wallpaperUrl} />
@@ -703,14 +735,14 @@ export default function App() {
 
       {/* Header */}
       <header className="sticky top-0 z-40 backdrop-blur-md border-b" style={{ background: `${C.void}CC`, borderColor: C.borderSoft }}>
-        <div className="flex items-center justify-between px-4 py-3 max-w-5xl mx-auto">
+        <div className="flex items-center justify-between px-4 py-4 max-w-5xl mx-auto">
           <div className="flex items-center gap-3">
-            <button onClick={() => setSidebarOpen(true)} className="p-1.5 rounded-md border" style={{ borderColor: C.border }}>
-              <Menu size={18} color={C.ivory} />
+            <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-md border" style={{ borderColor: C.border }}>
+              <Menu size={20} color={C.ivory} />
             </button>
-            <div className="flex items-center gap-2">
-              <Sparkles size={18} color={C.gold} />
-              <span className="font-black tracking-widest text-sm" style={{ fontFamily: "'Orbitron', sans-serif" }}>
+            <div className="flex items-center gap-2.5">
+              <Sparkles size={24} color={C.gold} />
+              <span className="font-black tracking-widest text-lg" style={{ fontFamily: "'Orbitron', sans-serif" }}>
                 JIN_KUN.INVENTORY
               </span>
             </div>
@@ -735,27 +767,9 @@ export default function App() {
             </button>
           )}
         </div>
-
-        {/* Tab bar */}
-        <div className="flex gap-1 px-3 pb-2 overflow-x-auto max-w-5xl mx-auto no-scrollbar">
-          {TABS.map(t => {
-            const Icon = t.icon;
-            const active = activeTab === t.id;
-            return (
-              <button
-                key={t.id}
-                onClick={() => setActiveTab(t.id)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-t-md text-sm font-semibold whitespace-nowrap border-b-2 transition-colors"
-                style={{ color: active ? C.gold : C.ivoryDim, borderColor: active ? C.gold : "transparent" }}
-              >
-                <Icon size={15} /> {t.label}
-              </button>
-            );
-          })}
-        </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-5 pb-16">
+      <main className="max-w-5xl mx-auto px-4 py-5 pb-28">
         {!username && activeTab === "dashboard" && (
           <div className="mb-4 rounded-lg px-4 py-3 flex items-start justify-between gap-3 flex-wrap" style={{ background: `${C.rose}14`, border: `1px solid ${C.rose}44` }}>
             <p className="text-xs" style={{ color: C.rose }}>
@@ -771,8 +785,10 @@ export default function App() {
           <DashboardTab
             username={username}
             pityByBanner={pityByBanner}
-            mustPullChars={mustPullChars}
-            mustPullWeapons={mustPullWeapons}
+            priorityChars={priorityChars}
+            priorityWeapons={priorityWeapons}
+            dashPriorityTier={dashPriorityTier}
+            setDashPriorityTier={setDashPriorityTier}
             setActiveTab={setActiveTab}
           />
         )}
@@ -786,6 +802,10 @@ export default function App() {
             priorities={characterPriorities}
             setTier={setCharTier}
             kind="character"
+            elementFilter={charElementFilter}
+            setElementFilter={setCharElementFilter}
+            weaponFilter={charWeaponFilter}
+            setWeaponFilter={setCharWeaponFilter}
           />
         )}
 
@@ -798,6 +818,8 @@ export default function App() {
             priorities={weaponPriorities}
             setTier={setWeaponTier}
             kind="weapon"
+            weaponFilter={weaponTypeFilter}
+            setWeaponFilter={setWeaponTypeFilter}
           />
         )}
 
@@ -824,6 +846,31 @@ export default function App() {
           />
         )}
       </main>
+
+      {/* Bottom nav */}
+      <nav
+        className="fixed bottom-0 inset-x-0 z-40 flex items-stretch"
+        style={{ background: `${C.void}F2`, borderTop: `1px solid ${C.borderSoft}`, backdropFilter: "blur(10px)", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      >
+        <div className="flex w-full max-w-5xl mx-auto">
+          {TABS.map(t => {
+            const Icon = t.icon;
+            const active = activeTab === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => setActiveTab(t.id)}
+                className="flex-1 flex flex-col items-center justify-center gap-1 py-2.5"
+              >
+                <Icon size={19} color={active ? C.gold : C.ivoryDim} />
+                <span className="text-[9px] font-semibold leading-none" style={{ color: active ? C.gold : C.ivoryDim }}>
+                  {t.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
 
       {sidebarOpen && (
         <Sidebar
@@ -859,7 +906,8 @@ export default function App() {
 /* ============================================================================
    DASHBOARD TAB
 ============================================================================ */
-function DashboardTab({ username, pityByBanner, mustPullChars, mustPullWeapons, setActiveTab }) {
+function DashboardTab({ username, pityByBanner, priorityChars, priorityWeapons, dashPriorityTier, setDashPriorityTier, setActiveTab }) {
+  const activeTierMeta = TIERS.find(t => t.id === dashPriorityTier);
   return (
     <div className="space-y-4">
       <div className="rounded-xl p-5" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
@@ -884,33 +932,57 @@ function DashboardTab({ username, pityByBanner, mustPullChars, mustPullWeapons, 
       </div>
 
       <div className="rounded-xl p-4" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
-        <h2 className="text-sm font-bold mb-2" style={{ color: C.starlight }}>MUST-PULL CHARACTERS</h2>
-        {mustPullChars.length === 0 ? (
-          <p className="text-sm italic" style={{ color: C.ivoryDim }}>None set — visit Resonators to pick your targets.</p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {mustPullChars.map(c => (
-              <span key={c.id} className="text-xs px-2.5 py-1 rounded-full" style={{ background: `${C.five}18`, color: C.five, border: `1px solid ${C.five}55` }}>
-                {c.name}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
+        <h2 className="text-sm font-bold mb-3" style={{ color: C.starlight }}>PULL PRIORITIES</h2>
 
-      <div className="rounded-xl p-4" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
-        <h2 className="text-sm font-bold mb-2" style={{ color: C.starlight }}>MUST-PULL WEAPONS</h2>
-        {mustPullWeapons.length === 0 ? (
-          <p className="text-sm italic" style={{ color: C.ivoryDim }}>None set — visit Weapons to pick your targets.</p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {mustPullWeapons.map(w => (
-              <span key={w.id} className="text-xs px-2.5 py-1 rounded-full" style={{ background: `${C.five}18`, color: C.five, border: `1px solid ${C.five}55` }}>
-                {w.name}
-              </span>
-            ))}
-          </div>
-        )}
+        <div className="flex gap-1.5 mb-4">
+          {TIERS.map(t => {
+            const active = dashPriorityTier === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => setDashPriorityTier(t.id)}
+                className="flex-1 rounded-lg text-xs font-bold py-2 uppercase tracking-wide transition-all"
+                style={{
+                  background: active ? t.color : C.panel2,
+                  color: active ? C.void : C.ivoryDim,
+                  border: `1px solid ${active ? t.color : C.border}`,
+                }}
+              >
+                {t.id === "must" ? "Must" : t.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mb-4">
+          <div className="text-[11px] font-semibold mb-1.5" style={{ color: C.ivoryDim }}>CHARACTERS</div>
+          {priorityChars.length === 0 ? (
+            <p className="text-sm italic" style={{ color: C.ivoryDim }}>No characters set to "{activeTierMeta?.label}" yet.</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {priorityChars.map(c => (
+                <span key={c.id} className="text-xs px-2.5 py-1 rounded-full flex items-center gap-1.5" style={{ background: `${activeTierMeta.color}18`, color: activeTierMeta.color, border: `1px solid ${activeTierMeta.color}55` }}>
+                  <ElementBadge element={c.element} size={16} /> {c.name}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div>
+          <div className="text-[11px] font-semibold mb-1.5" style={{ color: C.ivoryDim }}>WEAPONS</div>
+          {priorityWeapons.length === 0 ? (
+            <p className="text-sm italic" style={{ color: C.ivoryDim }}>No weapons set to "{activeTierMeta?.label}" yet.</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {priorityWeapons.map(w => (
+                <span key={w.id} className="text-xs px-2.5 py-1 rounded-full flex items-center gap-1.5" style={{ background: `${activeTierMeta.color}18`, color: activeTierMeta.color, border: `1px solid ${activeTierMeta.color}55` }}>
+                  <WeaponBadge type={w.type} size={16} /> {w.name}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -919,7 +991,56 @@ function DashboardTab({ username, pityByBanner, mustPullChars, mustPullWeapons, 
 /* ============================================================================
    RESONATOR / WEAPON GRID (shared layout)
 ============================================================================ */
-function RosterGrid({ title, items, search, setSearch, priorities, setTier, kind }) {
+function FilterChipRow({ label, options, value, onChange }) {
+  return (
+    <div className="mb-2.5">
+      <div className="text-[10px] font-semibold mb-1.5 uppercase tracking-wide" style={{ color: C.ivoryDim }}>{label}</div>
+      <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+        <button
+          onClick={() => onChange("all")}
+          className="shrink-0 px-3 py-1.5 rounded-full text-[11px] font-semibold"
+          style={{
+            background: value === "all" ? C.gold : C.panel2,
+            color: value === "all" ? C.void : C.ivoryDim,
+            border: `1px solid ${value === "all" ? C.gold : C.border}`,
+          }}
+        >
+          All
+        </button>
+        {options.map(opt => {
+          const active = value === opt.id;
+          return (
+            <button
+              key={opt.id}
+              onClick={() => onChange(opt.id)}
+              className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold"
+              style={{
+                background: active ? opt.color : C.panel2,
+                color: active ? C.void : C.ivoryDim,
+                border: `1px solid ${active ? opt.color : C.border}`,
+              }}
+            >
+              {opt.code && (
+                <span
+                  className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[7px] font-bold"
+                  style={{ background: active ? `${C.void}33` : `${opt.color}22`, color: active ? C.void : opt.color }}
+                >
+                  {opt.code}
+                </span>
+              )}
+              {opt.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+const ELEMENT_FILTER_OPTIONS = Object.entries(ELEMENTS).map(([name, v]) => ({ id: name, label: name, color: v.color, code: v.code }));
+const WEAPON_FILTER_OPTIONS = Object.entries(WEAPON_TYPES).map(([name, code]) => ({ id: name, label: name, color: C.starlight, code }));
+
+function RosterGrid({ title, items, search, setSearch, priorities, setTier, kind, elementFilter, setElementFilter, weaponFilter, setWeaponFilter }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
@@ -927,7 +1048,7 @@ function RosterGrid({ title, items, search, setSearch, priorities, setTier, kind
         <span className="text-xs" style={{ color: C.ivoryDim }}>Tap a tier chip to assign priority</span>
       </div>
 
-      <div className="relative mb-4">
+      <div className="relative mb-3">
         <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" color={C.ivoryDim} />
         <input
           value={search}
@@ -938,7 +1059,12 @@ function RosterGrid({ title, items, search, setSearch, priorities, setTier, kind
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      {kind === "character" && (
+        <FilterChipRow label="Element" options={ELEMENT_FILTER_OPTIONS} value={elementFilter} onChange={setElementFilter} />
+      )}
+      <FilterChipRow label="Weapon Type" options={WEAPON_FILTER_OPTIONS} value={weaponFilter} onChange={setWeaponFilter} />
+
+      <div className="grid grid-cols-2 gap-3 mt-3">
         {items.map(item => (
           <div key={item.id} className="rounded-xl p-3" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
             <Portrait
