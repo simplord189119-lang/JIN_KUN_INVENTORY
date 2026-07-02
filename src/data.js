@@ -8,7 +8,7 @@ export const CHARACTERS = [
 
   { id: 'lingyang', name: 'Lingyang', element: 'Glacio', weaponType: 'Gauntlets', rarity: 5, image: '' },
 
-  { id: 'lucilla', name: 'Lucilla', element: 'Glacio', weaponType: 'Rectifier', rarity: 5, image: 'https://wuthering.gg/characters/lucilla' },
+  { id: 'lucilla', name: 'Lucilla', element: 'Glacio', weaponType: 'Rectifier', rarity: 5, image: 'content://media/external/downloads/1000017313' },
 
   { id: 'sanhua', name: 'Sanhua', element: 'Glacio', weaponType: 'Sword', rarity: 4, image: '' },
 
