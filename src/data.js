@@ -69,7 +69,7 @@ export const CHARACTERS = [
   { id: 'xiangli_yao', name: 'Xiangli Yao', element: 'Electro', weaponType: 'Gauntlets', rarity: 5, image: '' },
 
 
-  { id: 'yinlin', name: 'Yinlin', element: 'Electro', weaponType: 'Sword', rarity: 5, image: '' },
+  { id: 'yinlin', name: 'Yinlin', element: 'Electro', weaponType: 'Rectifier', rarity: 5, image: '' },
 
 
   { id: 'yuanwu', name: 'Yuanwu', element: 'Electro', weaponType: 'Gauntlets', rarity: 4, image: '' },
