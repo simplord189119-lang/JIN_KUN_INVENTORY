@@ -77,7 +77,7 @@ export const CHARACTERS = [
 
 
   // Fusion
-  { id: 'aemeath', name: 'Aemeath', element: 'Fusion', weaponType: 'Sword', rarity: 5, image: '' },
+  { id: 'aemeath', name: 'Aemeath', element: 'Fusion', weaponType: 'Sword', rarity: 5, image: 'https://static.wikia.nocookie.net/wutheringwaves/images/9/9b/Aemeath_Convene_Draw.png/revision/latest/scale-to-width-down/250?cb=20260221172643' },
 
 
   { id: 'brant', name: 'Brant', element: 'Fusion', weaponType: 'Sword', rarity: 5, image: '' },
