@@ -4,7 +4,7 @@ import {
   Sparkles, User, Upload, Link2, Star,
   Check, X, Menu, LayoutDashboard, Users, Package, History, BarChart3,
   LogOut, LogIn, UserPlus, Loader2, Info, Image as ImageIcon, Eye, EyeOff,
-  Trash2, Plus, Search,
+  Trash2, Plus, Search, ListChecks, Filter, ChevronDown, ChevronUp,
 } from "lucide-react";
 import {
   createUserWithEmailAndPassword, signInWithEmailAndPassword,
@@ -785,11 +785,16 @@ export default function App() {
           <DashboardTab
             username={username}
             pityByBanner={pityByBanner}
+            setActiveTab={setActiveTab}
+          />
+        )}
+
+        {activeTab === "priorities" && (
+          <PullPrioritiesTab
             priorityChars={priorityChars}
             priorityWeapons={priorityWeapons}
             dashPriorityTier={dashPriorityTier}
             setDashPriorityTier={setDashPriorityTier}
-            setActiveTab={setActiveTab}
           />
         )}
 
@@ -884,6 +889,7 @@ export default function App() {
           onRemoveWallpaper={handleRemoveWallpaper}
           onOpenAuth={(mode) => { setAuthMode(mode); setAuthOpen(true); setSidebarOpen(false); }}
           onLogout={handleLogout}
+          onOpenPriorities={() => { setActiveTab("priorities"); setSidebarOpen(false); }}
         />
       )}
 
@@ -906,8 +912,7 @@ export default function App() {
 /* ============================================================================
    DASHBOARD TAB
 ============================================================================ */
-function DashboardTab({ username, pityByBanner, priorityChars, priorityWeapons, dashPriorityTier, setDashPriorityTier, setActiveTab }) {
-  const activeTierMeta = TIERS.find(t => t.id === dashPriorityTier);
+function DashboardTab({ username, pityByBanner, setActiveTab }) {
   return (
     <div className="space-y-4">
       <div className="rounded-xl p-5" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
@@ -930,10 +935,20 @@ function DashboardTab({ username, pityByBanner, priorityChars, priorityWeapons, 
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+/* ============================================================================
+   PULL PRIORITIES TAB — reached only from the sidebar menu
+============================================================================ */
+function PullPrioritiesTab({ priorityChars, priorityWeapons, dashPriorityTier, setDashPriorityTier }) {
+  const activeTierMeta = TIERS.find(t => t.id === dashPriorityTier);
+  return (
+    <div className="space-y-4">
+      <h1 className="text-lg font-bold">Pull Priorities</h1>
 
       <div className="rounded-xl p-4" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
-        <h2 className="text-sm font-bold mb-3" style={{ color: C.starlight }}>PULL PRIORITIES</h2>
-
         <div className="flex gap-1.5 mb-4">
           {TIERS.map(t => {
             const active = dashPriorityTier === t.id;
@@ -983,6 +998,98 @@ function DashboardTab({ username, pityByBanner, priorityChars, priorityWeapons, 
             </div>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================================
+   CURATED BUILD INFO — optional, keyed by lowercase name so it works no
+   matter what ids your data.js/weaponsData.js use. Wuthering Waves' meta
+   shifts with every patch, so treat this as a snapshot rather than gospel,
+   and anything not listed here just shows "Not added yet" in the detail
+   view instead of breaking. Ask to have more characters/weapons filled in.
+============================================================================ */
+const CHARACTER_BUILDS_BY_NAME = {
+  "carlotta": {
+    signatureWeapon: "The Last Dance (5★ Pistols)",
+    echoSet: "Frosty Resolve",
+    teamComp: ["Carlotta", "Zhezhi", "Shorekeeper"],
+  },
+};
+
+const WEAPON_INFO_BY_NAME = {
+  "the last dance": {
+    buff: "Grants 12% ATK. After an Intro Skill or Resonance Liberation, gains a 48% Resonance Skill DMG bonus for a short window. High Crit DMG substat — built specifically for Carlotta.",
+    ownerName: "Carlotta",
+  },
+};
+
+function DetailModal({ kind, item, onClose }) {
+  const isChar = kind === "character";
+  const build = isChar ? CHARACTER_BUILDS_BY_NAME[item.name.toLowerCase()] : null;
+  const info = !isChar ? WEAPON_INFO_BY_NAME[item.name.toLowerCase()] : null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4" style={{ background: "#00000099" }} onClick={onClose}>
+      <div className="w-full max-w-sm rounded-xl p-5 max-h-[85vh] overflow-y-auto" style={{ background: C.panel, border: `1px solid ${C.border}` }} onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-base font-bold">{item.name}</h2>
+          <button onClick={onClose}><X size={18} color={C.ivoryDim} /></button>
+        </div>
+
+        <Portrait
+          name={item.name}
+          image={item.image}
+          rarity={item.rarity}
+          color={isChar ? (ELEMENTS[item.element]?.color || C.starlight) : C.starlight}
+          size="w-32 h-32 mx-auto"
+        />
+        <div className="flex items-center justify-center gap-2 mt-3">
+          {isChar && <ElementBadge element={item.element} />}
+          <WeaponBadge type={isChar ? item.weaponType : item.type} />
+          <RarityStars rarity={item.rarity} />
+        </div>
+
+        {isChar ? (
+          <div className="mt-4 space-y-3">
+            <div>
+              <div className="text-[11px] font-semibold" style={{ color: C.starlight }}>SIGNATURE WEAPON</div>
+              <p className="text-sm mt-1">{build?.signatureWeapon || <span className="italic" style={{ color: C.ivoryDim }}>Not added yet.</span>}</p>
+            </div>
+            <div>
+              <div className="text-[11px] font-semibold" style={{ color: C.starlight }}>BEST ECHO SET</div>
+              <p className="text-sm mt-1">{build?.echoSet || <span className="italic" style={{ color: C.ivoryDim }}>Not added yet.</span>}</p>
+            </div>
+            <div>
+              <div className="text-[11px] font-semibold" style={{ color: C.starlight }}>BEST TEAM COMP</div>
+              {build?.teamComp?.length ? (
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {build.teamComp.map(n => (
+                    <span key={n} className="text-xs px-2 py-1 rounded-full" style={{ background: C.panel2, border: `1px solid ${C.border}` }}>{n}</span>
+                  ))}
+                </div>
+              ) : <p className="text-sm mt-1 italic" style={{ color: C.ivoryDim }}>Not added yet.</p>}
+            </div>
+          </div>
+        ) : (
+          <div className="mt-4 space-y-3">
+            <div>
+              <div className="text-[11px] font-semibold" style={{ color: C.starlight }}>CRIT / BUFF</div>
+              <p className="text-sm mt-1">{info?.buff || <span className="italic" style={{ color: C.ivoryDim }}>Not added yet.</span>}</p>
+            </div>
+            <div>
+              <div className="text-[11px] font-semibold" style={{ color: C.starlight }}>BELONGS TO</div>
+              <p className="text-sm mt-1">{info?.ownerName || <span className="italic" style={{ color: C.ivoryDim }}>Not character-specific / not set.</span>}</p>
+            </div>
+          </div>
+        )}
+
+        {!build && !info && (
+          <p className="text-[11px] mt-4 italic" style={{ color: C.ivoryDim }}>
+            Ask to have this one filled in and I'll look up current, accurate build info for it.
+          </p>
+        )}
       </div>
     </div>
   );
@@ -1041,11 +1148,15 @@ const ELEMENT_FILTER_OPTIONS = Object.entries(ELEMENTS).map(([name, v]) => ({ id
 const WEAPON_FILTER_OPTIONS = Object.entries(WEAPON_TYPES).map(([name, code]) => ({ id: name, label: name, color: C.starlight, code }));
 
 function RosterGrid({ title, items, search, setSearch, priorities, setTier, kind, elementFilter, setElementFilter, weaponFilter, setWeaponFilter }) {
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [detailItem, setDetailItem] = useState(null);
+  const activeFilterCount = (kind === "character" && elementFilter !== "all" ? 1 : 0) + (weaponFilter !== "all" ? 1 : 0);
+
   return (
     <div>
       <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
         <h1 className="text-lg font-bold">{title}</h1>
-        <span className="text-xs" style={{ color: C.ivoryDim }}>Tap a tier chip to assign priority</span>
+        <span className="text-xs" style={{ color: C.ivoryDim }}>Tap a card for info · tap a tier chip to assign priority</span>
       </div>
 
       <div className="relative mb-3">
@@ -1059,14 +1170,39 @@ function RosterGrid({ title, items, search, setSearch, priorities, setTier, kind
         />
       </div>
 
-      {kind === "character" && (
-        <FilterChipRow label="Element" options={ELEMENT_FILTER_OPTIONS} value={elementFilter} onChange={setElementFilter} />
-      )}
-      <FilterChipRow label="Weapon Type" options={WEAPON_FILTER_OPTIONS} value={weaponFilter} onChange={setWeaponFilter} />
+      <div className="mb-3">
+        <button
+          onClick={() => setFiltersOpen(o => !o)}
+          className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-semibold"
+          style={{ background: C.panel2, border: `1px solid ${C.border}`, color: C.ivory }}
+        >
+          <span className="flex items-center gap-2">
+            <Filter size={15} color={C.starlight} />
+            Filters
+            {activeFilterCount > 0 && (
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: C.gold, color: C.void }}>{activeFilterCount}</span>
+            )}
+          </span>
+          {filtersOpen ? <ChevronUp size={15} color={C.ivoryDim} /> : <ChevronDown size={15} color={C.ivoryDim} />}
+        </button>
+        {filtersOpen && (
+          <div className="mt-2 p-3 rounded-lg" style={{ background: C.panel2, border: `1px solid ${C.border}` }}>
+            {kind === "character" && (
+              <FilterChipRow label="Element" options={ELEMENT_FILTER_OPTIONS} value={elementFilter} onChange={setElementFilter} />
+            )}
+            <FilterChipRow label="Weapon Type" options={WEAPON_FILTER_OPTIONS} value={weaponFilter} onChange={setWeaponFilter} />
+          </div>
+        )}
+      </div>
 
       <div className="grid grid-cols-2 gap-3 mt-3">
         {items.map(item => (
-          <div key={item.id} className="rounded-xl p-3" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
+          <div
+            key={item.id}
+            onClick={() => setDetailItem(item)}
+            className="rounded-xl p-3 cursor-pointer active:opacity-80"
+            style={{ background: C.panel, border: `1px solid ${C.border}` }}
+          >
             <Portrait
               name={item.name}
               image={item.image}
@@ -1094,6 +1230,8 @@ function RosterGrid({ title, items, search, setSearch, priorities, setTier, kind
           <p className="col-span-2 text-sm italic text-center py-8" style={{ color: C.ivoryDim }}>No matches.</p>
         )}
       </div>
+
+      {detailItem && <DetailModal kind={kind} item={detailItem} onClose={() => setDetailItem(null)} />}
     </div>
   );
 }
@@ -1206,16 +1344,33 @@ function ConveneTab(props) {
         {pullHistory.length === 0 ? (
           <p className="text-sm italic" style={{ color: C.ivoryDim }}>No pulls imported yet.</p>
         ) : (
-          <div className="max-h-64 overflow-y-auto space-y-1.5 pr-1">
-            {pullHistory.slice(0, 100).map(p => (
-              <div key={p.id} className="flex items-center justify-between text-xs py-1.5 px-2 rounded" style={{ background: C.panel2 }}>
-                <span className="flex items-center gap-2 truncate">
-                  <RarityStars rarity={p.rarity} />
-                  <span className="truncate">{p.name}</span>
-                </span>
-                <span style={{ color: C.ivoryDim }}>{fmtDate(p.time)}</span>
-              </div>
-            ))}
+          <div className="max-h-96 overflow-y-auto space-y-2 pr-1">
+            {pullHistory.slice(0, 150).map(p => {
+              const bannerMeta = BANNERS.find(b => b.id === p.banner);
+              const rarityColor = p.rarity === 5 ? C.five : p.rarity === 4 ? C.four : C.ivoryDim;
+              return (
+                <div
+                  key={p.id}
+                  className="flex items-center gap-3 py-2.5 px-3 rounded-lg"
+                  style={{ background: C.panel2, borderLeft: `3px solid ${rarityColor}` }}
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold truncate">{p.name}</span>
+                      <RarityStars rarity={p.rarity} />
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {bannerMeta && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: `${C.starlight}18`, color: C.starlight }}>
+                          {bannerMeta.short}
+                        </span>
+                      )}
+                      <span className="text-[11px]" style={{ color: C.ivoryDim }}>{fmtDate(p.time)}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -1298,15 +1453,22 @@ function AnalyticsTab({ pityByBanner, pieData, fiftyFiftyPulls, markFiftyFifty }
 /* ============================================================================
    SIDEBAR DRAWER — appearance (wallpaper) + account
 ============================================================================ */
-function Sidebar({ onClose, username, wallpaperUrl, wallpaperBusy, fileInputRef, onPickWallpaper, onWallpaperFile, onRemoveWallpaper, onOpenAuth, onLogout }) {
+function Sidebar({ onClose, username, wallpaperUrl, wallpaperBusy, fileInputRef, onPickWallpaper, onWallpaperFile, onRemoveWallpaper, onOpenAuth, onLogout, onOpenPriorities }) {
   return (
     <div className="fixed inset-0 z-50 flex">
-      <div className="flex-1" style={{ background: "#00000088" }} onClick={onClose} />
-      <div className="w-72 max-w-[85vw] h-full p-4 overflow-y-auto" style={{ background: C.panel, borderLeft: `1px solid ${C.border}` }}>
+      <div className="w-72 max-w-[85vw] h-full p-4 overflow-y-auto" style={{ background: C.panel, borderRight: `1px solid ${C.border}` }}>
         <div className="flex items-center justify-between mb-5">
-          <span className="font-bold text-sm" style={{ fontFamily: "'Orbitron', sans-serif" }}>SETTINGS</span>
+          <span className="font-bold text-sm" style={{ fontFamily: "'Orbitron', sans-serif" }}>MENU</span>
           <button onClick={onClose}><X size={18} color={C.ivoryDim} /></button>
         </div>
+
+        <button
+          onClick={onOpenPriorities}
+          className="w-full flex items-center gap-2.5 px-3 py-3 rounded-lg text-sm font-semibold mb-5"
+          style={{ background: `${C.gold}14`, border: `1px solid ${C.gold}55`, color: C.gold }}
+        >
+          <ListChecks size={17} /> Pull Priorities
+        </button>
 
         <h3 className="text-xs font-bold mb-2" style={{ color: C.starlight }}>APPEARANCE</h3>
         <div className="rounded-lg p-3 mb-5" style={{ background: C.panel2, border: `1px solid ${C.border}` }}>
@@ -1360,6 +1522,7 @@ function Sidebar({ onClose, username, wallpaperUrl, wallpaperBusy, fileInputRef,
           </div>
         )}
       </div>
+      <div className="flex-1" style={{ background: "#00000088" }} onClick={onClose} />
     </div>
   );
 }
