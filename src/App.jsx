@@ -15,6 +15,7 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "./firebase.js";
 import { CHARACTERS } from "./data.js";
 import { WEAPONS } from "./weaponsData.js";
+import { CHARACTER_BUILDS_BY_NAME, WEAPON_INFO_BY_NAME } from "./buildData.js";
 
 /* ============================================================================
    DESIGN TOKENS — starlight blues, ivory whites, gilt-thorn gold, a whisper
@@ -1004,26 +1005,9 @@ function PullPrioritiesTab({ priorityChars, priorityWeapons, dashPriorityTier, s
 }
 
 /* ============================================================================
-   CURATED BUILD INFO — optional, keyed by lowercase name so it works no
-   matter what ids your data.js/weaponsData.js use. Wuthering Waves' meta
-   shifts with every patch, so treat this as a snapshot rather than gospel,
-   and anything not listed here just shows "Not added yet" in the detail
-   view instead of breaking. Ask to have more characters/weapons filled in.
+   CURATED BUILD INFO — imported from buildData.js (see that file for how
+   to add more characters/weapons).
 ============================================================================ */
-const CHARACTER_BUILDS_BY_NAME = {
-  "carlotta": {
-    signatureWeapon: "The Last Dance (5★ Pistols)",
-    echoSet: "Frosty Resolve",
-    teamComp: ["Carlotta", "Zhezhi", "Shorekeeper"],
-  },
-};
-
-const WEAPON_INFO_BY_NAME = {
-  "the last dance": {
-    buff: "Grants 12% ATK. After an Intro Skill or Resonance Liberation, gains a 48% Resonance Skill DMG bonus for a short window. High Crit DMG substat — built specifically for Carlotta.",
-    ownerName: "Carlotta",
-  },
-};
 
 function DetailModal({ kind, item, onClose }) {
   const isChar = kind === "character";
