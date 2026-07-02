@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import {
-  Sparkles, User, Upload, Link2, Star,
+  Sparkles, User, Upload, Link2, Star, Star as StarIcon, Crown, Circle,
   Check, X, Menu, LayoutDashboard, Users, Package, History, BarChart3,
   LogOut, LogIn, UserPlus, Loader2, Info, Image as ImageIcon, Eye, EyeOff,
   Trash2, Plus, Search, ListChecks, Filter, ChevronDown, ChevronUp,
+  Mail, Lock,
 } from "lucide-react";
 import {
   createUserWithEmailAndPassword, signInWithEmailAndPassword,
@@ -78,9 +79,9 @@ const WEAPON_TYPES = {
 };
 
 const TIERS = [
-  { id: "must", label: "Must Pull", color: C.five },
-  { id: "high", label: "High", color: C.starlight },
-  { id: "low", label: "Low", color: C.ivoryDim },
+  { id: "must", label: "Must Pull", color: C.five, Icon: Crown },
+  { id: "high", label: "High", color: C.starlight, Icon: StarIcon },
+  { id: "low", label: "Low", color: C.ivoryDim, Icon: Circle },
 ];
 
 const BANNERS = [
@@ -90,6 +91,27 @@ const BANNERS = [
   { id: "weapon_standard", label: "Standard Weapon", short: "Weap. Standard", kind: "weapon" },
 ];
 const HARD_PITY = 80;
+
+/* ============================================================================
+   REFERENCE-MATCHED STYLE SHEET — notch-cut panel corners, gold shimmer
+   title text, glowing active-tab underline, and styled auth inputs. Kept
+   as plain CSS (injected once below) since arbitrary clip-paths and
+   keyframe animations aren't expressible via Tailwind utility classes.
+   Resonator/weapon roster cards intentionally do NOT use these classes —
+   they keep their original size and styling.
+============================================================================ */
+const WT_STYLE_SHEET = `
+.jk-notch{clip-path:polygon(0 14px,14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%);}
+.jk-notch-sm{clip-path:polygon(0 8px,8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%);}
+.jk-shimmer{background:linear-gradient(90deg,${C.gold} 0%,#ffe99a 40%,${C.gold} 60%,${C.goldDim} 100%);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:jk-shimmer 4s linear infinite;}
+@keyframes jk-shimmer{0%{background-position:200% center;}100%{background-position:-200% center;}}
+.jk-tabbtn{position:relative;}
+.jk-tabbtn[data-active="true"]::after{content:"";position:absolute;left:18%;right:18%;bottom:0;height:2px;background:${C.gold};box-shadow:0 0 8px ${C.gold}CC;}
+.jk-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid ${C.border};border-radius:8px;padding:10px 14px 10px 38px;color:${C.ivory};font-size:14px;outline:none;transition:border-color .2s;}
+.jk-input:focus{border-color:${C.gold}88;}
+.jk-input::placeholder{color:${C.starlightDim};}
+.jk-ambient{background:radial-gradient(ellipse 60% 40% at 50% -6%,${C.gold}22,transparent 62%),radial-gradient(ellipse 70% 55% at 85% 105%,${C.starlight}18,transparent 60%),${C.void};}
+`;
 
 const TABS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -454,7 +476,10 @@ export default function App() {
     link.rel = "stylesheet";
     link.href = "https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap";
     document.head.appendChild(link);
-    return () => { document.head.removeChild(link); };
+    const style = document.createElement("style");
+    style.textContent = WT_STYLE_SHEET;
+    document.head.appendChild(style);
+    return () => { document.head.removeChild(link); document.head.removeChild(style); };
   }, []);
 
   const notify = useCallback((message, type = "ok") => {
@@ -762,13 +787,19 @@ export default function App() {
       <header className="sticky top-0 z-40 backdrop-blur-md border-b" style={{ background: `${C.void}CC`, borderColor: C.borderSoft }}>
         <div className="flex items-center justify-between px-4 py-4 max-w-5xl mx-auto">
           <div className="flex items-center gap-3">
-            <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-md border" style={{ borderColor: C.border }}>
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="jk-notch-sm p-2.5"
+              style={{ background: C.panel2, border: `1px solid ${C.border}` }}
+              aria-label="Open menu"
+            >
               <Menu size={20} color={C.ivory} />
             </button>
             <div className="flex items-center gap-2.5">
               <Sparkles size={24} color={C.gold} />
-              <span className="font-black tracking-widest text-lg" style={{ fontFamily: "'Orbitron', sans-serif" }}>
-                JIN_KUN.INVENTORY
+              <span className="font-black tracking-widest text-lg leading-none" style={{ fontFamily: "'Orbitron', sans-serif" }}>
+                <span className="jk-shimmer">JIN_KUN</span>
+                <span style={{ color: C.ivoryDim }}>.INVENTORY</span>
               </span>
             </div>
           </div>
@@ -890,7 +921,8 @@ export default function App() {
               <button
                 key={t.id}
                 onClick={() => setActiveTab(t.id)}
-                className="flex-1 flex flex-col items-center justify-center gap-1 py-2.5"
+                data-active={active}
+                className="jk-tabbtn flex-1 flex flex-col items-center justify-center gap-1 py-2.5"
               >
                 <Icon size={19} color={active ? C.gold : C.ivoryDim} />
                 <span className="text-[9px] font-semibold leading-none" style={{ color: active ? C.gold : C.ivoryDim }}>
@@ -915,6 +947,8 @@ export default function App() {
           onOpenAuth={(mode) => { setAuthMode(mode); setAuthOpen(true); setSidebarOpen(false); }}
           onLogout={handleLogout}
           onOpenPriorities={() => { setActiveTab("priorities"); setSidebarOpen(false); }}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
         />
       )}
 
@@ -971,23 +1005,27 @@ function PullPrioritiesTab({ priorityChars, priorityWeapons, dashPriorityTier, s
   const activeTierMeta = TIERS.find(t => t.id === dashPriorityTier);
   return (
     <div className="space-y-4">
-      <h1 className="text-lg font-bold">Pull Priorities</h1>
+      <h1 className="text-lg font-bold flex items-center gap-2">
+        <Crown size={18} color={C.gold} /> Pull Priorities
+      </h1>
 
-      <div className="rounded-xl p-4" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
+      <div className="jk-notch p-4" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
         <div className="flex gap-1.5 mb-4">
           {TIERS.map(t => {
             const active = dashPriorityTier === t.id;
+            const TierIcon = t.Icon;
             return (
               <button
                 key={t.id}
                 onClick={() => setDashPriorityTier(t.id)}
-                className="flex-1 rounded-lg text-xs font-bold py-2 uppercase tracking-wide transition-all"
+                className="jk-notch-sm flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2 uppercase tracking-wide transition-all"
                 style={{
                   background: active ? t.color : C.panel2,
                   color: active ? C.void : C.ivoryDim,
                   border: `1px solid ${active ? t.color : C.border}`,
                 }}
               >
+                <TierIcon size={13} />
                 {t.id === "must" ? "Must" : t.label}
               </button>
             );
@@ -995,9 +1033,11 @@ function PullPrioritiesTab({ priorityChars, priorityWeapons, dashPriorityTier, s
         </div>
 
         <div className="mb-4">
-          <div className="text-[11px] font-semibold mb-1.5" style={{ color: C.ivoryDim }}>CHARACTERS</div>
+          <div className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: C.ivoryDim }}>
+            <activeTierMeta.Icon size={12} color={activeTierMeta.color} /> CHARACTERS ({priorityChars.length})
+          </div>
           {priorityChars.length === 0 ? (
-            <p className="text-sm italic" style={{ color: C.ivoryDim }}>No characters set to "{activeTierMeta?.label}" yet.</p>
+            <p className="text-sm italic" style={{ color: C.ivoryDim }}>None flagged.</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               {priorityChars.map(c => (
@@ -1010,9 +1050,11 @@ function PullPrioritiesTab({ priorityChars, priorityWeapons, dashPriorityTier, s
         </div>
 
         <div>
-          <div className="text-[11px] font-semibold mb-1.5" style={{ color: C.ivoryDim }}>WEAPONS</div>
+          <div className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: C.ivoryDim }}>
+            <activeTierMeta.Icon size={12} color={activeTierMeta.color} /> WEAPONS ({priorityWeapons.length})
+          </div>
           {priorityWeapons.length === 0 ? (
-            <p className="text-sm italic" style={{ color: C.ivoryDim }}>No weapons set to "{activeTierMeta?.label}" yet.</p>
+            <p className="text-sm italic" style={{ color: C.ivoryDim }}>None flagged.</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               {priorityWeapons.map(w => (
@@ -1461,25 +1503,55 @@ function AnalyticsTab({ pityByBanner, pieData, fiftyFiftyPulls, markFiftyFifty }
 /* ============================================================================
    SIDEBAR DRAWER — appearance (wallpaper) + account
 ============================================================================ */
-function Sidebar({ onClose, username, wallpaperUrl, wallpaperBusy, fileInputRef, onPickWallpaper, onWallpaperFile, onRemoveWallpaper, onOpenAuth, onLogout, onOpenPriorities }) {
+function Sidebar({ onClose, username, wallpaperUrl, wallpaperBusy, fileInputRef, onPickWallpaper, onWallpaperFile, onRemoveWallpaper, onOpenAuth, onLogout, onOpenPriorities, activeTab, setActiveTab }) {
   return (
     <div className="fixed inset-0 z-50 flex">
-      <div className="w-72 max-w-[85vw] h-full p-4 overflow-y-auto" style={{ background: C.panel, borderRight: `1px solid ${C.border}` }}>
+      <div className="w-72 max-w-[85vw] h-full p-4 overflow-y-auto jk-notch" style={{ background: C.panel, borderRight: `1px solid ${C.border}` }}>
         <div className="flex items-center justify-between mb-5">
-          <span className="font-bold text-sm" style={{ fontFamily: "'Orbitron', sans-serif" }}>MENU</span>
+          <span className="font-bold text-base" style={{ fontFamily: "'Orbitron', sans-serif" }}>
+            <span className="jk-shimmer">jin_kun</span>
+          </span>
           <button onClick={onClose}><X size={18} color={C.ivoryDim} /></button>
         </div>
 
+        <nav className="space-y-1 mb-5">
+          {TABS.map(t => {
+            const Icon = t.icon;
+            const active = activeTab === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => { setActiveTab(t.id); onClose(); }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold uppercase tracking-wide jk-notch-sm"
+                style={{ background: active ? C.panel2 : "transparent", color: active ? C.gold : C.ivoryDim }}
+              >
+                <Icon size={17} />
+                {t.label}
+              </button>
+            );
+          })}
+        </nav>
+
         <button
           onClick={onOpenPriorities}
-          className="w-full flex items-center gap-2.5 px-3 py-3 rounded-lg text-sm font-semibold mb-5"
+          className="w-full flex items-center gap-2.5 px-3 py-3 jk-notch-sm text-sm font-semibold mb-5"
           style={{ background: `${C.gold}14`, border: `1px solid ${C.gold}55`, color: C.gold }}
         >
           <ListChecks size={17} /> Pull Priorities
         </button>
 
+        {!username && (
+          <button
+            onClick={() => onOpenAuth("login")}
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 jk-notch-sm text-sm font-semibold mb-5"
+            style={{ border: `1px solid ${C.gold}66`, color: C.gold }}
+          >
+            <LogIn size={15} /> Sign In
+          </button>
+        )}
+
         <h3 className="text-xs font-bold mb-2" style={{ color: C.starlight }}>APPEARANCE</h3>
-        <div className="rounded-lg p-3 mb-5" style={{ background: C.panel2, border: `1px solid ${C.border}` }}>
+        <div className="jk-notch-sm p-3 mb-5" style={{ background: C.panel2, border: `1px solid ${C.border}` }}>
           {wallpaperUrl ? (
             <img src={wallpaperUrl} alt="Current wallpaper" className="w-full h-24 object-cover rounded-md mb-2" />
           ) : (
@@ -1509,7 +1581,7 @@ function Sidebar({ onClose, username, wallpaperUrl, wallpaperBusy, fileInputRef,
 
         <h3 className="text-xs font-bold mb-2" style={{ color: C.starlight }}>ACCOUNT</h3>
         {username ? (
-          <div className="rounded-lg p-3" style={{ background: C.panel2, border: `1px solid ${C.border}` }}>
+          <div className="jk-notch-sm p-3" style={{ background: C.panel2, border: `1px solid ${C.border}` }}>
             <div className="flex items-center gap-2 mb-3">
               <User size={16} color={C.starlight} />
               <span className="text-sm font-semibold">{username}</span>
@@ -1519,11 +1591,8 @@ function Sidebar({ onClose, username, wallpaperUrl, wallpaperBusy, fileInputRef,
             </button>
           </div>
         ) : (
-          <div className="rounded-lg p-3 space-y-2" style={{ background: C.panel2, border: `1px solid ${C.border}` }}>
+          <div className="jk-notch-sm p-3 space-y-2" style={{ background: C.panel2, border: `1px solid ${C.border}` }}>
             <p className="text-xs" style={{ color: C.ivoryDim }}>Guest mode — nothing is saved.</p>
-            <button onClick={() => onOpenAuth("login")} className="w-full flex items-center justify-center gap-1.5 px-2 py-2 rounded-md text-xs font-semibold" style={{ background: C.gold, color: C.void }}>
-              <LogIn size={13} /> Log In
-            </button>
             <button onClick={() => onOpenAuth("signup")} className="w-full flex items-center justify-center gap-1.5 px-2 py-2 rounded-md text-xs font-semibold" style={{ border: `1px solid ${C.starlight}55`, color: C.starlight }}>
               <UserPlus size={13} /> Create Account
             </button>
@@ -1541,47 +1610,68 @@ function Sidebar({ onClose, username, wallpaperUrl, wallpaperBusy, fileInputRef,
 function AuthModal({ mode, setMode, username, setUsername, password, setPassword, confirm, setConfirm, showPw, setShowPw, busy, error, onSubmit, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4" style={{ background: "#00000099" }}>
-      <div className="w-full max-w-sm rounded-xl p-5" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-bold">{mode === "login" ? "Log In" : "Create Account"}</h2>
+      <div className="w-full max-w-sm jk-notch p-5" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="text-base font-bold">
+            <span className="jk-shimmer">jin_kun</span> <span style={{ color: C.ivoryDim, fontWeight: 500 }}>inventory</span>
+          </h2>
           <button onClick={onClose}><X size={18} color={C.ivoryDim} /></button>
+        </div>
+        <p className="text-xs mb-4" style={{ color: C.ivoryDim }}>
+          {mode === "login" ? "Sign in to sync your data" : "Create your Rover profile"}
+        </p>
+
+        <div className="flex mb-4 jk-notch-sm overflow-hidden" style={{ border: `1px solid ${C.border}` }}>
+          <button
+            onClick={() => setMode("login")}
+            className="flex-1 py-2.5 text-xs font-bold uppercase tracking-wide"
+            style={{ background: mode === "login" ? C.panel2 : "transparent", color: mode === "login" ? C.gold : C.ivoryDim }}
+          >
+            Sign In
+          </button>
+          <button
+            onClick={() => setMode("signup")}
+            className="flex-1 py-2.5 text-xs font-bold uppercase tracking-wide"
+            style={{ background: mode === "signup" ? C.panel2 : "transparent", color: mode === "signup" ? C.gold : C.ivoryDim }}
+          >
+            Create Account
+          </button>
         </div>
 
         <div className="space-y-3">
-          <div>
-            <label className="text-[11px] font-semibold" style={{ color: C.starlight }}>Username</label>
+          <div className="relative">
+            <User size={15} className="absolute left-3 top-1/2 -translate-y-1/2" color={C.starlightDim} />
             <input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full mt-1 px-3 py-2 rounded-lg text-sm outline-none"
-              style={{ background: C.panel2, border: `1px solid ${C.border}`, color: C.ivory }}
+              placeholder="Username"
+              className="jk-input"
               autoCapitalize="none"
             />
           </div>
-          <div>
-            <label className="text-[11px] font-semibold" style={{ color: C.starlight }}>Password</label>
-            <div className="relative mt-1">
-              <input
-                type={showPw ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 pr-9 rounded-lg text-sm outline-none"
-                style={{ background: C.panel2, border: `1px solid ${C.border}`, color: C.ivory }}
-              />
-              <button type="button" onClick={() => setShowPw(v => !v)} className="absolute right-2.5 top-1/2 -translate-y-1/2">
-                {showPw ? <EyeOff size={15} color={C.ivoryDim} /> : <Eye size={15} color={C.ivoryDim} />}
-              </button>
-            </div>
+          <div className="relative">
+            <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2" color={C.starlightDim} />
+            <input
+              type={showPw ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              className="jk-input"
+              style={{ paddingRight: 36 }}
+            />
+            <button type="button" onClick={() => setShowPw(v => !v)} className="absolute right-2.5 top-1/2 -translate-y-1/2">
+              {showPw ? <EyeOff size={15} color={C.ivoryDim} /> : <Eye size={15} color={C.ivoryDim} />}
+            </button>
           </div>
           {mode === "signup" && (
-            <div>
-              <label className="text-[11px] font-semibold" style={{ color: C.starlight }}>Confirm Password</label>
+            <div className="relative">
+              <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2" color={C.starlightDim} />
               <input
                 type={showPw ? "text" : "password"}
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
-                className="w-full mt-1 px-3 py-2 rounded-lg text-sm outline-none"
-                style={{ background: C.panel2, border: `1px solid ${C.border}`, color: C.ivory }}
+                placeholder="Confirm password"
+                className="jk-input"
               />
             </div>
           )}
@@ -1591,19 +1681,12 @@ function AuthModal({ mode, setMode, username, setUsername, password, setPassword
           <button
             onClick={onSubmit}
             disabled={busy}
-            className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-bold disabled:opacity-60"
+            className="w-full flex items-center justify-center gap-1.5 py-2.5 jk-notch-sm text-sm font-bold disabled:opacity-60"
             style={{ background: C.gold, color: C.void }}
           >
             {busy ? <Loader2 size={15} className="animate-spin" /> : mode === "login" ? <LogIn size={15} /> : <UserPlus size={15} />}
-            {mode === "login" ? "Log In" : "Create Account"}
+            {mode === "login" ? "Sign In" : "Create Account"}
           </button>
-
-          <p className="text-xs text-center" style={{ color: C.ivoryDim }}>
-            {mode === "login" ? "Don't have an account? " : "Already have an account? "}
-            <button onClick={() => setMode(mode === "login" ? "signup" : "login")} className="underline font-semibold" style={{ color: C.starlight }}>
-              {mode === "login" ? "Create one" : "Log in"}
-            </button>
-          </p>
         </div>
       </div>
     </div>
