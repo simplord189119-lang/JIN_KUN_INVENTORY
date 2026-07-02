@@ -22,7 +22,7 @@
    rather than guessed.
 ============================================================================ */
 
-export const BUILD_DATA = [
+export const BUILDDATA = [
   /* ---- Rover forms (player character — no dedicated signature weapon) ---- */
   {
     id: 'rover-aero',
