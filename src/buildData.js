@@ -11,256 +11,314 @@
    time of writing but WILL shift as new characters release — re-check
    Prydwen.gg or Game8 periodically, especially for blank fields below
    (mostly very recent/unreleased characters where data wasn't confirmable).
+
+   NOTE ON FORMAT: this is the same data as the original keyed object, just
+   flattened into a single ordered array ("a line") instead of a nested
+   object. Order runs chronologically — launch-era Rover forms/roster first,
+   through the confirmed later-patch sections, down to the still-unreleased
+   v3.5 additions at the end. Each entry keeps its original key as `id`.
+   `version` is only filled in where the source file's section comment
+   stated one explicitly; it's left null for the earlier, unlabeled sections
+   rather than guessed.
 ============================================================================ */
 
-export const BUILD_DATA = {
+export const BUILD_DATA = [
   /* ---- Rover forms (player character — no dedicated signature weapon) ---- */
-  'rover-aero': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
-    signature: '',
+  {
+    id: 'rover-aero',
+    version: null,
+    signature: 'Blood Pact's Edge',
     echoSet: 'Windward Pilgrimage',
     teamComp: ['Cartethyia', 'Ciaccona'],
   },
-  'rover-havoc': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
+  {
+    id: 'rover-havoc',
+    version: null,
     signature: '',
     echoSet: 'Sun-Sinking Eclipse',
     teamComp: ['Verina', 'Mortefi'],
   },
-  'rover-spectro': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
+  {
+    id: 'rover-spectro',
+    version: null,
     signature: '',
     echoSet: 'Rejuvenating Glow',
     teamComp: ['Jinhsi', 'Shorekeeper'],
   },
 
   /* ---- 5-star limited / standard DPS & sub-DPS ---- */
-  'jinhsi': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
-    signature: "Verity's Handle",
+  {
+    id: 'jinhsi',
+    version: null,
+    signature: "Ages of Harvest",
     echoSet: 'Empyrean Anthem',
     teamComp: ['Shorekeeper', 'Yuanwu'],
   },
-  'changli': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
+  {
+    id: 'changli',
+    version: null,
     signature: 'Blazing Brilliance',
     echoSet: 'Molten Rift',
     teamComp: ['Shorekeeper', 'Mortefi'],
   },
-  'camellya': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
+  {
+    id: 'camellya',
+    version: null,
     signature: 'Red Spring',
     echoSet: 'Eternal Radiance',
     teamComp: ['Shorekeeper', 'Danjin'],
   },
-  'carlotta': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
-    signature: '',
+  {
+    id: 'carlotta',
+    version: null,
+    signature: ' The Last Dance ',
     echoSet: 'Frosty Resolve',
     teamComp: ['Zhezhi', 'Shorekeeper'],
   },
-  'zani': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
+  {
+    id: 'zani',
+    version: null,
     signature: 'Blazing Justice',
     echoSet: 'Empyrean Anthem',
     teamComp: ['Phoebe', 'Rover (Spectro)'],
   },
-  'xiangli-yao': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
-    signature: '',
+  {
+    id: 'xiangli-yao',
+    version: null,
+    signature: 'Verity's Handle',
     echoSet: 'Sierra Gale',
     teamComp: ['Shorekeeper', 'Yuanwu'],
   },
-  'yinlin': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
+  {
+    id: 'yinlin',
+    version: null,
     signature: 'Stringmaster',
-    echoSet: "Moonlit Clouds",
+    echoSet: 'Moonlit Clouds',
     teamComp: ['Verina', 'Mortefi'],
   },
-  'zhezhi': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
-    signature: '',
+  {
+    id: 'zhezhi',
+    version: null,
+    signature: 'Rime-Draped Sprouts',
     echoSet: 'Freezing Frost',
     teamComp: ['Carlotta', 'Shorekeeper'],
   },
-  'brant': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
-    signature: '',
+  {
+    id: 'brant',
+    version: null,
+    signature: 'Unflickering Valor',
     echoSet: 'Molten Rift',
     teamComp: ['Verina', 'Mortefi'],
   },
-  'cantarella': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
+  {
+    id: 'cantarella',
+    version: null,
     signature: 'Whispers of Sirens',
     echoSet: 'Rejuvenating Glow',
     teamComp: ['Shorekeeper', 'Youhu'],
   },
-  'phrolova': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
+  {
+    id: 'phrolova',
+    version: null,
     signature: 'Lethean Elegy',
     echoSet: 'Eternal Radiance',
     teamComp: ['Shorekeeper', 'Yuanwu'],
   },
-  'roccia': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
-    signature: '',
+  {
+    id: 'roccia',
+    version: null,
+    signature: 'Tragicomedy',
     echoSet: 'Eternal Radiance',
     teamComp: ['Danjin', 'Verina'],
   },
-  'encore': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
-    signature: 'Emerald of Genesis',
+  {
+    id: 'encore',
+    version: null,
+    signature: 'Cosmic Ripples',
     echoSet: 'Molten Rift',
     teamComp: ['Mortefi', 'Verina'],
   },
-  'jiyan': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
+  {
+    id: 'jiyan',
+    version: null,
     signature: 'Verdant Summit',
     echoSet: 'Sierra Gale',
     teamComp: ['Verina', 'Mortefi'],
   },
-  'calcharo': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
-    signature: '',
+  {
+    id: 'calcharo',
+    version: null,
+    signature: 'Emerald of Genesis',
     echoSet: 'Moonlit Clouds',
     teamComp: ['Verina', 'Mortefi'],
   },
-  'lupa': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
+  {
+    id: 'lupa',
+    version: null,
     signature: 'Wildfire Mark',
     echoSet: 'Tidebreaking Courage',
     teamComp: ['Camellya', 'Verina'],
   },
-  'galbrena': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
-    signature: '',
+  {
+    id: 'galbrena',
+    version: null,
+    signature: 'Lux & Umbra',
     echoSet: 'Molten Rift',
     teamComp: ['Verina', 'Mortefi'],
   },
-  'phoebe': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
-    signature: '',
+  {
+    id: 'phoebe',
+    version: null,
+    signature: 'Luminous Hymn',
     echoSet: 'Empyrean Anthem',
     teamComp: ['Zani', 'Rover (Spectro)'],
   },
-  'lumi': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
-    signature: '',
+  {
+    id: 'lumi',
+    version: null,
+    signature: 'Lustrous Razor',
     echoSet: 'Sierra Gale',
     teamComp: ['Xiangli Yao', 'Shorekeeper'],
   },
 
   /* ---- 5-star supports / healers ---- */
-  'the-shorekeeper': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
+  {
+    id: 'the-shorekeeper',
+    version: null,
     signature: 'Stellar Symphony',
     echoSet: 'Rejuvenating Glow',
     teamComp: ['Xiangli Yao', 'Jinhsi'],
   },
-  'verina': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
+  {
+    id: 'verina',
+    version: null,
     // Standard-banner character — no dedicated signature weapon exists for
     // her; Stellar Symphony (Shorekeeper's signature) is her best-in-slot pick.
-    signature: '',
+    signature: 'Cosmic Ripples.',
     echoSet: 'Rejuvenating Glow',
     teamComp: ['Calcharo', 'Jiyan'],
   },
 
   /* ---- 4-star roster (no dedicated signature weapon in-game) ---- */
-  'yangyang': { signature: '', echoSet: 'Sierra Gale', teamComp: ['Jinhsi', 'Verina'] },
-  'chixia': { signature: '', echoSet: 'Molten Rift', teamComp: ['Encore', 'Baizhi'] },
-  'baizhi': { signature: '', echoSet: 'Rejuvenating Glow', teamComp: ['Encore', 'Chixia'] },
-  'yuanwu': { signature: '', echoSet: 'Moonlit Clouds', teamComp: ['Jinhsi', 'Shorekeeper'] },
-  'sanhua': { signature: '', echoSet: 'Freezing Frost', teamComp: ['Calcharo', 'Encore'] },
-  'jianxin': { signature: '', echoSet: 'Rejuvenating Glow', teamComp: ['Jiyan', 'Verina'] },
-  'mortefi': { signature: '', echoSet: 'Moonlit Clouds', teamComp: ['Encore', 'Camellya'] },
-  'danjin': { signature: '', echoSet: 'Sun-Sinking Eclipse', teamComp: ['Camellya', 'Verina'] },
-  'lingyang': { signature: '', echoSet: 'Freezing Frost', teamComp: ['Zhezhi', 'Baizhi'] },
-  'taoqi': { signature: '', echoSet: 'Sun-Sinking Eclipse', teamComp: ['Roccia', 'Baizhi'] },
-  'youhu': { signature: '', echoSet: 'Freezing Frost', teamComp: ['Cantarella', 'Shorekeeper'] },
-  'aalto': { signature: '', echoSet: 'Sierra Gale', teamComp: ['Cartethyia', 'Ciaccona'] },
-  'buling': { signature: '', echoSet: '', teamComp: [] },
+  { id: 'yangyang', version: null, signature: '', echoSet: 'Sierra Gale', teamComp: ['Jinhsi', 'Verina'] },
+  { id: 'chixia', version: null, signature: '', echoSet: 'Molten Rift', teamComp: ['Encore', 'Baizhi'] },
+  { id: 'baizhi', version: null, signature: '', echoSet: 'Rejuvenating Glow', teamComp: ['Encore', 'Chixia'] },
+  { id: 'yuanwu', version: null, signature: '', echoSet: 'Moonlit Clouds', teamComp: ['Jinhsi', 'Shorekeeper'] },
+  { id: 'sanhua', version: null, signature: '', echoSet: 'Freezing Frost', teamComp: ['Calcharo', 'Encore'] },
+  { id: 'jianxin', version: null, signature: '', echoSet: 'Rejuvenating Glow', teamComp: ['Jiyan', 'Verina'] },
+  { id: 'mortefi', version: null, signature: '', echoSet: 'Moonlit Clouds', teamComp: ['Encore', 'Camellya'] },
+  { id: 'danjin', version: null, signature: '', echoSet: 'Sun-Sinking Eclipse', teamComp: ['Camellya', 'Verina'] },
+  { id: 'lingyang', version: null, signature: '', echoSet: 'Freezing Frost', teamComp: ['Zhezhi', 'Baizhi'] },
+  { id: 'taoqi', version: null, signature: '', echoSet: 'Sun-Sinking Eclipse', teamComp: ['Roccia', 'Baizhi'] },
+  { id: 'youhu', version: null, signature: '', echoSet: 'Freezing Frost', teamComp: ['Cantarella', 'Shorekeeper'] },
+  { id: 'aalto', version: null, signature: '', echoSet: 'Sierra Gale', teamComp: ['Cartethyia', 'Ciaccona'] },
+  { id: 'buling', version: null, signature: '', echoSet: '', teamComp: [] },
 
   /* ---- v2.4+ additions (verified via current build guides, July 2026) ---- */
-  'cartethyia': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
+  {
+    id: 'cartethyia',
+    version: '2.4+',
     signature: "Defier's Thorn",
     echoSet: 'Windward Pilgrimage',
     teamComp: ['Ciaccona', 'Chisa'],
   },
-  'ciaccona': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
-    signature: '',
+  {
+    id: 'ciaccona',
+    version: '2.4+',
+    signature: 'Breaking News',
     echoSet: 'Windward Pilgrimage',
-    teamComp: ['Cartethyia', 'Rover (Aero)'],
+    teamComp: ['Cartethyia', 'chisa'],
   },
 
   /* ---- v2.7–2.8 additions ---- */
-  'qiuyuan': { signature: '', echoSet: '', teamComp: [] },
+  { id: 'qiuyuan', version: '2.7–2.8', signature: '', echoSet: '', teamComp: [] },
 
   /* ---- v3.0+ additions ---- */
-  'mornye': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
+  {
+    id: 'mornye',
     signature: 'Starfield Calibrator',
     echoSet: '',
     teamComp: ['Lucy', 'Rebecca'],
   },
-  'sigrika': { signature: '', echoSet: '', teamComp: [] },
-  'hiyuki': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
+  { id: 'sigrika', 
+signature: 'Solsworn Ciphers', 
+echoSet: '',
+ teamComp: [] },
+  {
+    id: 'hiyuki',
     signature: 'Frostburn',
     echoSet: 'Freezing Frost',
     teamComp: [],
   },
-  'denia': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
+  {
+    id: 'denia',
     signature: 'Forged Dwarf Star',
     echoSet: '',
     teamComp: [],
   },
-  'chisa': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
+  {
+    id: 'chisa',
+    version: '3.0+',
     signature: 'Kumokiri',
     echoSet: '',
     teamComp: ['Cartethyia', 'Ciaccona'],
   },
-  'iuno': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
+  {
+    id: 'iuno',
+    version: '3.0+',
     signature: "Moongazer's Sigil",
     echoSet: '',
     teamComp: ['Augusta', 'Rover (Aero)'],
   },
-  'augusta': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
+  {
+    id: 'augusta',
+    version: '3.0+',
     signature: 'Thunderflare Dominion',
     echoSet: 'Crown of Valor',
     teamComp: ['Iuno', 'Mortefi'],
   },
-  'luuk-herssen': { signature: '', echoSet: '', teamComp: [] },
-  'lynae': { signature: '', echoSet: '', teamComp: [] },
-  'aemeath': { signature: '', echoSet: '', teamComp: [] },
+  { id: 'luuk-herssen', 
+signature: 'Daybreaker's Spine', 
+echoSet: '', 
+teamComp: [] },
+  
+  { id: 'lynae',
+ signature: 'Spectrum Blaster', 
+echoSet: '', 
+teamComp: [] },
+  
+  { id: 'aemeath', 
+signature: 'Everbright Polestar',
+ echoSet: '', 
+teamComp: [] },
 
   /* ---- v3.4 additions (Cyberpunk: Edgerunners collab + rerun cast) ---- */
-  'lucy': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
-    signature: '',
+  {
+    id: 'lucy',
+    signature: 'Spectral Trigger',
     echoSet: 'Nightmare: Shattered Dreams and Vanished Ghosts',
     teamComp: ['Rebecca', 'Mornye'],
   },
-  'rebecca': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
-    signature: '',
+  {
+    id: 'rebecca',
+    signature: 'Skull Thrasher',
     echoSet: 'Moonlit Clouds',
     teamComp: ['Lucy', 'Mornye'],
   },
-  'lucilla': {
-    // characterImage: '', weaponImage: '', echoSetImage: ''
-    signature: '',
+  {
+    id: 'lucilla',
+    signature: 'Freeze Frame',
     echoSet: '',
     teamComp: ['Chisa', ''],
   },
 
   /* ---- v3.5 additions — not yet released at time of writing; no meta exists ---- */
-  'yangyang-xuanling': { signature: '', echoSet: '', teamComp: [] },
-  'suisui': { signature: '', echoSet: '', teamComp: [] },
-};
+  { id: 'yangyang-xuanling', 
+signature: 'the Azure of Heaven',
+ echoSet: '', 
+teamComp: [] },
+  { id: 'suisui', 
+signature: 'Firstlight's Herald', 
+echoSet: '', 
+teamComp: [] },
+];
