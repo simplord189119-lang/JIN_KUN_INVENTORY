@@ -1,4 +1,4 @@
-/* ============================================================================
+* ============================================================================
    BUILD DATA — signature weapon / echo set / team comp per character, and
    crit-buff / owner per weapon. Keyed by lowercase display name so it works
    no matter what ids your data.js / weaponsData.js use.
@@ -32,5 +32,181 @@ export const WEAPON_INFO_BY_NAME = {
   "ages of harvest": {
     buff: "Grants Crit Rate and Spectro DMG Bonus. Triggers a Resonance Skill DMG bonus after both Intro Skill and Resonance Skill are used. Built specifically for Jinhsi's Incandescence playstyle.",
     ownerName: "Jinhsi",
+  },/* ============================================================================
+   BUILD DATA — signature weapon / echo set / team comp per character, and
+   crit-buff / owner per weapon. Keyed by lowercase display name so it works
+   no matter what ids your data.js / weaponsData.js use.
+
+   This is a curated snapshot, not a live feed — Wuthering Waves' meta shifts
+   with every patch. Anything not listed here just shows "Not added yet" in
+   the app instead of breaking. Ask to have more characters filled in and
+   they'll be researched fresh rather than guessed.
+
+   Coverage note: this pass covers the most-played / meta-defining 5★ cast
+   (roughly 20 of the ~35 currently released 5★s), verified against current
+   build guides. Newer 3.3–3.4 releases (Hiyuki, Denia, Chisa, Galbrena,
+   Rebecca, Lucy, Lucilla, Sigrika, Suisui, Yangyang: Xuanling) and a handful
+   of older niche units (Lingyang, Jianxin, Iuno, Qiuyuan, Ciaccona, Lupa,
+   Mornye, Lynae, Aemeath, Luuk Herssen) aren't in here yet — ask and they
+   can be added.
+
+   Last researched: July 2026 (patch 3.4-era meta).
+============================================================================ */
+
+export const CHARACTER_BUILDS_BY_NAME = {
+  "carlotta": {
+    signatureWeapon: "The Last Dance (5★ Pistols)",
+    echoSet: "Frosty Resolve",
+    teamComp: ["Carlotta", "Zhezhi", "Shorekeeper"],
   },
+  "jinhsi": {
+    signatureWeapon: "Ages of Harvest (5★ Broadblade)",
+    echoSet: "Celestial Light",
+    teamComp: ["Jinhsi", "Zhezhi", "Shorekeeper"],
+  },
+  "jiyan": {
+    signatureWeapon: "Verdant Summit (5★ Broadblade)",
+    echoSet: "Sierra Gale",
+    teamComp: ["Jiyan", "Iuno", "Shorekeeper"],
+  },
+  "calcharo": {
+    signatureWeapon: "No dedicated signature (standard-banner unit) — Verdant Summit or Lustrous Razor",
+    echoSet: "Void Thunder",
+    teamComp: ["Calcharo", "Yinlin", "Verina"],
+  },
+  "encore": {
+    signatureWeapon: "No dedicated signature (standard-banner unit) — Stringmaster or Cosmic Ripples",
+    echoSet: "Molten Rift",
+    teamComp: ["Encore", "Sanhua", "Shorekeeper"],
+  },
+  "verina": {
+    signatureWeapon: "No dedicated signature (standard-banner unit) — Variation",
+    echoSet: "Rejuvenating Glow",
+    teamComp: ["Verina", "flexible Main DPS", "flexible Sub-DPS"],
+  },
+  "yinlin": {
+    signatureWeapon: "Stringmaster (5★ Rectifier)",
+    echoSet: "Moonlit Clouds",
+    teamComp: ["Yinlin", "Xiangli Yao", "Shorekeeper"],
+  },
+  "xiangli yao": {
+    signatureWeapon: "Verity's Handle (5★ Gauntlets)",
+    echoSet: "Moonlit Clouds",
+    teamComp: ["Xiangli Yao", "Yinlin", "Shorekeeper"],
+  },
+  "zhezhi": {
+    signatureWeapon: "Rime-Draped Sprouts (5★ Rectifier)",
+    echoSet: "Moonlit Clouds",
+    teamComp: ["Zhezhi", "Jinhsi", "Shorekeeper"],
+  },
+  "changli": {
+    signatureWeapon: "Blazing Brilliance (5★ Sword)",
+    echoSet: "Molten Rift",
+    teamComp: ["Changli", "Xiangli Yao", "Shorekeeper"],
+  },
+  "camellya": {
+    signatureWeapon: "Red Spring (5★ Sword)",
+    echoSet: "Rejuvenating Glow",
+    teamComp: ["Camellya", "Shorekeeper", "Sanhua"],
+  },
+  "cartethyia": {
+    signatureWeapon: "Defier's Thorn (5★ Sword)",
+    echoSet: "Windward Pilgrimage",
+    teamComp: ["Cartethyia", "Chixia", "Rover (Aero)"],
+  },
+  "shorekeeper": {
+    signatureWeapon: "Stellar Symphony (5★ Rectifier)",
+    echoSet: "Rejuvenating Glow",
+    teamComp: ["Shorekeeper", "flexible Main DPS", "flexible Sub-DPS"],
+  },
+  "phrolova": {
+    signatureWeapon: "Lethean Elegy (5★ Rectifier)",
+    echoSet: "Dream of the Lost (3pc) + Midnight Veil (2pc)",
+    teamComp: ["Phrolova", "Cantarella", "Qiuyuan"],
+  },
+  "zani": {
+    signatureWeapon: "Blazing Justice (5★ Gauntlets)",
+    echoSet: "Eternal Radiance",
+    teamComp: ["Zani", "Phoebe", "Ciaccona"],
+  },
+  "augusta": {
+    signatureWeapon: "Thunder Flare Dominion (5★ Rectifier)",
+    echoSet: "Crown of Valor",
+    teamComp: ["Augusta", "Mortefi", "Iuno"],
+  },
+  "cantarella": {
+    signatureWeapon: "Whispers of Sirens (5★ Rectifier)",
+    echoSet: "Moonlit Clouds",
+    teamComp: ["Cantarella", "Phrolova", "Qiuyuan"],
+  },
+  "roccia": {
+    signatureWeapon: "Tragicomedy (5★ Gauntlets)",
+    echoSet: "Moonlit Clouds (support) / Midnight Veil (personal DMG)",
+    teamComp: ["Roccia", "Camellya", "Shorekeeper"],
+  },
+};
+
+export const WEAPON_INFO_BY_NAME = {
+  "the last dance": {
+    buff: "Grants 12% ATK. After an Intro Skill or Resonance Liberation, gains a 48% Resonance Skill DMG bonus for a short window. High Crit DMG substat — built specifically for Carlotta.",
+    ownerName: "Carlotta",
+  },
+  "ages of harvest": {
+    buff: "Grants Crit Rate and Spectro DMG Bonus. Triggers a Resonance Skill DMG bonus after both Intro Skill and Resonance Skill are used. Built specifically for Jinhsi's Incandescence playstyle.",
+    ownerName: "Jinhsi",
+  },
+  "verdant summit": {
+    buff: "Grants Crit DMG. Boosts Heavy Attack DMG after using Intro Skill or Resonance Liberation. Built around Jiyan's Qingloong Mode, but also a strong generalist Broadblade for Calcharo.",
+    ownerName: "Jiyan",
+  },
+  "stringmaster": {
+    buff: "Grants ATK and Resonance Skill DMG Bonus, plus a stacking ATK buff on hit. One of the most versatile 5★ weapons — great on Yinlin, Encore, and most Rectifier off-field DPS.",
+    ownerName: "Yinlin",
+  },
+  "verity's handle": {
+    buff: "Grants ATK. After Resonance Liberation, gains stacking Attribute DMG Bonus and Heavy Attack DMG Bonus. Built for Xiangli Yao's enhanced-state combos.",
+    ownerName: "Xiangli Yao",
+  },
+  "rime-draped sprouts": {
+    buff: "Grants ATK and off-field Basic Attack DMG Bonus (up to 104%) after using Resonance Skill — tailor-made for Zhezhi's basic-attack-scaling kit, also strong on Encore and Cantarella.",
+    ownerName: "Zhezhi",
+  },
+  "blazing brilliance": {
+    buff: "Grants ATK and Crit DMG. Dealing damage builds Searing Feather stacks that boost Resonance Skill DMG — built for Changli's True Sight combo loop.",
+    ownerName: "Changli",
+  },
+  "red spring": {
+    buff: "Grants ATK. Gains stacking Havoc DMG Bonus on hit, further amplified after Resonance Liberation — built for Camellya's Vine/Super Vine rotations.",
+    ownerName: "Camellya",
+  },
+  "defier's thorn": {
+    buff: "Grants HP% (scales with Cartethyia's HP-scaling kit) and Crit DMG. Boosts Liberation DMG based on missing HP — her only real best-in-slot option.",
+    ownerName: "Cartethyia",
+  },
+  "stellar symphony": {
+    buff: "Grants Energy Regen and reduces field-time requirements while amplifying team buffs. Marginal upgrade over the 4★ Variation, mainly valued for the ATK buff.",
+    ownerName: "Shorekeeper",
+  },
+  "lethean elegy": {
+    buff: "Grants ATK. After Echo Skill DMG, gains 32% Resonance Skill DMG Bonus and 32% Echo Skill DMG Amplification, ignoring 8% DEF — by far the best Rectifier for Phrolova's off-field playstyle.",
+    ownerName: "Phrolova",
+  },
+  "blazing justice": {
+    buff: "Grants Crit DMG. DMG dealt ignores a portion of enemy DEF and amplifies Spectro Frazzle DMG — built around Zani's Inferno-mode Frazzle scaling.",
+    ownerName: "Zani",
+  },
+  "thunder flare dominion": {
+    buff: "Grants ATK and Crit-related substats, with bonuses tied to Augusta's time-based Prowess/Majesty resource system.",
+    ownerName: "Augusta",
+  },
+  "whispers of sirens": {
+    buff: "A universal Normal Attack-scaling Rectifier; on Cantarella it boosts her frequent Echo Skill casts and coordinated attacks. Replaceable by 4★ Augment for budget builds.",
+    ownerName: "Cantarella",
+  },
+  "tragicomedy": {
+    buff: "Grants Crit Rate. Heavy Attack DMG is amplified based on Roccia's own Crit Rate — also popular off-signature on Zani, since it's easy for Frazzle-focused kits to trigger.",
+    ownerName: "Roccia",
+  },
+};
+
 };
