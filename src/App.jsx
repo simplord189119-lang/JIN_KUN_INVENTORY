@@ -18,6 +18,30 @@ import { WEAPONS } from "./weaponsData.js";
 import { BUILD_DATA } from "./buildData.js";
 
 /* ============================================================================
+   BUILD LOOKUPS — DetailModal looks characters/weapons up by lowercased
+   name, but BUILD_DATA is keyed by `id` and uses a `signature` field (not
+   `signatureWeapon`). Derive the two name-keyed maps the modal expects.
+============================================================================ */
+const CHARACTER_BUILDS_BY_NAME = Object.fromEntries(
+  CHARACTERS
+    .map((c) => {
+      const b = BUILD_DATA.find((x) => x.id === c.id);
+      if (!b) return null;
+      return [
+        c.name.toLowerCase(),
+        { signatureWeapon: b.signature, echoSet: b.echoSet, teamComp: b.teamComp },
+      ];
+    })
+    .filter(Boolean)
+);
+
+/* Weapon-specific build info (crit/buff text, which character it belongs
+   to) isn't in buildData.js yet — BUILD_DATA only covers characters. Left
+   empty so DetailModal's existing "Not added yet" fallback handles weapons
+   until that data is added; nothing crashes in the meantime. */
+const WEAPON_INFO_BY_NAME = {};
+
+/* ============================================================================
    DESIGN TOKENS — starlight blues, ivory whites, gilt-thorn gold, a whisper
    of deep rose thorn-vine. Tailwind covers layout/spacing/type scale; custom
    hues are inline styles since arbitrary Tailwind values aren't available.
