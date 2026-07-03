@@ -151,7 +151,7 @@ export const CHARACTERS = [
   { id: 'zani', name: 'Zani', element: 'Spectro', weaponType: 'Broadblade', rarity: 5, image: '/images/zani.jpg' },
 
 
-  { id: 'rover_spectro', name: 'Rover (Spectro)', element: 'Spectro', weaponType: 'Sword', rarity: 5, image: '/images/spsctrotrover.jpg' },
+  { id: 'rover_spectro', name: 'Rover (Spectro)', element: 'Spectro', weaponType: 'Sword', rarity: 5, image: '/images/spectrorover.jpg' },
 
 
   // Announced / not yet released (3.5+) — element & weapon not officially confirmed yet
