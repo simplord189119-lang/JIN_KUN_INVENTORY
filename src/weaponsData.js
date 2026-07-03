@@ -1,4 +1,4 @@
-export const WEAPONS = [
+xport const WEAPONS = [
   // --- Standard 5-Star Weapons ---
   { id: 'standard_sword', name: 'Emerald of Genesis', type: 'Sword', rarity: 5 },
 
