@@ -133,7 +133,7 @@ export const CHARACTERS = [
   { id: 'lucy', name: 'Lucy', element: 'Spectro', weaponType: 'Pistols', rarity: 5, image: '/images/lucy.jpg' },
 
 
-  { id: 'luuk_herssen', name: 'Luuk Herssen', element: 'Spectro', weaponType: 'Gauntlets', rarity: 5, image: '/images/luke.jpg' },
+  { id: 'luuk_herssen', name: 'Luuk Herssen', element: 'Spectro', weaponType: 'Gauntlets', rarity: 5, image: '/images/luuk.jpg' },
 
 
   { id: 'lynae', name: 'Lynae', element: 'Spectro', weaponType: 'Pistols', rarity: 5, image: '/images/lynae.jpg' },
