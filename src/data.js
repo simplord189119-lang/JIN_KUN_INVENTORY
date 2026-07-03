@@ -47,7 +47,7 @@ export const CHARACTERS = [
   { id: 'yangyang', name: 'Yangyang', element: 'Aero', weaponType: 'Sword', rarity: 4, image: '/images/yangyang.jpg' },
 
 
-  { id: 'rover_aero', name: 'Rover (Aero)', element: 'Aero', weaponType: 'Sword', rarity: 5, image: '/images/aeroroved.jpg' },
+  { id: 'rover_aero', name: 'Rover (Aero)', element: 'Aero', weaponType: 'Sword', rarity: 5, image: '/images/aerorover.jpg' },
 
 
   // Electro
