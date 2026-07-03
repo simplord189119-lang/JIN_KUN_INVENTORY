@@ -14,7 +14,7 @@ export const WEAPONS = [
   // Glacio
   { id: 'sig_carlotta', name: 'The Last Dance', type: 'Pistols', rarity: 5, image: '' }, // Carlotta
 
-  { id: 'sig_hiyuki', name: 'Frostburn', type: 'Sword', rarity: 5, image: 'public/images/weapons/frostburn.jpg' }, // Hiyuki
+  { id: 'sig_hiyuki', name: 'Frostburn', type: 'Sword', rarity: 5, image: '' }, // Hiyuki
 
   { id: 'sig_lucilla', name: 'Freeze Frame', type: 'Rectifier', rarity: 5, image: '' }, // Lucilla
 
