@@ -12,17 +12,17 @@ export const WEAPONS = [
 
   // --- Limited / Signature 5-Star Weapons ---
   // Glacio
-  { id: 'sig_carlotta', name: 'The Last Dance', type: 'Pistols', rarity: 5, image: '/weapons/thelastdance.jpg' }, // Carlotta
+  { id: 'sig_carlotta', name: 'The Last Dance', type: 'Pistols', rarity: 5, image: '' }, // Carlotta
 
   { id: 'sig_hiyuki', name: 'Frostburn', type: 'Sword', rarity: 5, image: '/weapons/frostburn.jpg' }, // Hiyuki
 
-  { id: 'sig_lucilla', name: 'Freeze Frame', type: 'Rectifier', rarity: 5, image: '/weapons/freezeframe.jpg' }, // Lucilla
+  { id: 'sig_lucilla', name: 'Freeze Frame', type: 'Rectifier', rarity: 5, image: '' }, // Lucilla
 
 
   { id: 'sig_suisui', name: "Firstlight's Herald", type: 'Rectifier', rarity: 5, image: '' }, // Suisui
 
 
-  { id: 'sig_zhezhi', name: 'Rime-Draped Sprouts', type: 'Rectifier', rarity: 5, image: '/weapons/rimedrapedsprouts.jpg' }, // Zhezhi
+  { id: 'sig_zhezhi', name: 'Rime-Draped Sprouts', type: 'Rectifier', rarity: 5, image:'' }, // Zhezhi
 
 
 
@@ -73,25 +73,25 @@ export const WEAPONS = [
   { id: 'sig_denia', name: 'Forged Dwarf Star', type: 'Rectifier', rarity: 5, image: '' }, // Denia
 
 
-  { id: 'sig_galbrena', name: 'Lux & Umbra', type: 'Pistols', rarity: 5, image: '/weapons/lux&umbra.jpg' }, // Galbrena
+  { id: 'sig_galbrena', name: 'Lux & Umbra', type: 'Pistols', rarity: 5, image: '' }, // Galbrena
 
 
-  { id: 'sig_mornye', name: 'Starfield Calibrator', type: 'Broadblade', rarity: 5, image: '/weapons/starfieldcalibrator.jpg' }, // Mornye
+  { id: 'sig_mornye', name: 'Starfield Calibrator', type: 'Broadblade', rarity: 5, image: '' }, // Mornye
 
   // Havoc
   { id: 'sig_camellya', name: 'Red Spring', type: 'Sword', rarity: 5, image: '/weapons/redspring.jpg' }, // Camellya
 
 
-  { id: 'sig_cantarella', name: 'Whispers of Sirens', type: 'Rectifier', rarity: 5, image: '/weapons/whispersofsirens' }, // Cantarella
+  { id: 'sig_cantarella', name: 'Whispers of Sirens', type: 'Rectifier', rarity: 5, image: '/weapons/whispersofsirens.jpg' }, // Cantarella
 
 
   { id: 'sig_chisa', name: 'Kumokiri', type: 'Broadblade', rarity: 5, image: '' }, // Chisa
 
 
-  { id: 'sig_phrolova', name: 'Lethean Elegy', type: 'Rectifier', rarity: 5, image: '/weapons/letheanelegy.jpg' }, // Phrolova
+  { id: 'sig_phrolova', name: 'Lethean Elegy', type: 'Rectifier', rarity: 5, image: '' }, // Phrolova
 
 
-  { id: 'sig_roccia', name: 'Tragicomedy', type: 'Gauntlets', rarity: 5, image: '/weapons/tragicomedy.jpg' }, // Roccia
+  { id: 'sig_roccia', name: 'Tragicomedy', type: 'Gauntlets', rarity: 5, image: '' }, // Roccia
 
 
   { id: 'sig_yangyang_xuanling', name: 'Azure Oath', type: 'Sword', rarity: 5, image: '' }, // Yangyang: Xuanling
@@ -105,7 +105,7 @@ export const WEAPONS = [
 
   { id: 'sig_luuk_herssen', name: "Daybreaker's Spine", type: 'Gauntlets', rarity: 5, image: '/weapons/daybreakersspine.jpg' }, // Luuk Herssen
 
-  { id: 'sig_lynae', name: 'Spectrum Blaster', type: 'Pistols', rarity: 5, image: '/weapons/spectrumblaster.jpg' }, // Lynae
+  { id: 'sig_lynae', name: 'Spectrum Blaster', type: 'Pistols', rarity: 5, image: '' }, // Lynae
 
   { id: 'sig_phoebe', name: 'Luminous Hymn', type: 'Rectifier', rarity: 5, image: '' }, // Phoebe
 
