@@ -2,7 +2,7 @@ export const CHARACTERS = [
   // Glacio
   { id: 'baizhi', name: 'Baizhi', element: 'Glacio', weaponType: 'Rectifier', rarity: 4, image: '' },
 
-  { id: 'carlotta', name: 'Carlotta', element: 'Glacio', weaponType: 'Pistols', rarity: 5, image: '' },
+  { id: 'carlotta', name: 'Carlotta', element: 'Glacio', weaponType: 'Pistols', rarity: 5, image: '/images/carlotta.jpg' },
 
   { id: 'hiyuki', name: 'Hiyuki', element: 'Glacio', weaponType: 'Sword', rarity: 5, image: '/images/hiyuki.jpg' },
 
@@ -35,7 +35,7 @@ export const CHARACTERS = [
   { id: 'jianxin', name: 'Jianxin', element: 'Aero', weaponType: 'Gauntlets', rarity: 5, image: '' },
 
 
-  { id: 'jiyan', name: 'Jiyan', element: 'Aero', weaponType: 'Broadblade', rarity: 5, image: '' },
+  { id: 'jiyan', name: 'Jiyan', element: 'Aero', weaponType: 'Broadblade', rarity: 5, image: '/images/jiyan.jpg' },
 
 
   { id: 'qiuyuan', name: 'Qiuyuan', element: 'Aero', weaponType: 'Sword', rarity: 5, image: '' },
@@ -77,7 +77,7 @@ export const CHARACTERS = [
 
 
   // Fusion
-  { id: 'aemeath', name: 'Aemeath', element: 'Fusion', weaponType: 'Sword', rarity: 5, image: '' },
+  { id: 'aemeath', name: 'Aemeath', element: 'Fusion', weaponType: 'Sword', rarity: 5, image: '/images/aemeath.jpg' },
 
 
   { id: 'brant', name: 'Brant', element: 'Fusion', weaponType: 'Sword', rarity: 5, image: '' },
@@ -92,7 +92,7 @@ export const CHARACTERS = [
 
   { id: 'galbrena', name: 'Galbrena', element: 'Fusion', weaponType: 'Pistols', rarity: 5, image: '' },
 
-  { id: 'lupa', name: 'Lupa', element: 'Fusion', weaponType: 'Broadblade', rarity: 5, image: '' },
+  { id: 'lupa', name: 'Lupa', element: 'Fusion', weaponType: 'Broadblade', rarity: 5, image: '/images/lupa.jpg' },
 
 
   { id: 'mornye', name: 'Mornye', element: 'Fusion', weaponType: 'Broadblade', rarity: 5, image: '' },
@@ -128,7 +128,7 @@ export const CHARACTERS = [
   { id: 'yangyang_xuanling', name: 'Yangyang: Xuanling', element: 'Havoc', weaponType: 'Sword', rarity: 5, image: '' }, // 3.5
 
   // Spectro
-  { id: 'jinhsi', name: 'Jinhsi', element: 'Spectro', weaponType: 'Broadblade', rarity: 5, image: '' },
+  { id: 'jinhsi', name: 'Jinhsi', element: 'Spectro', weaponType: 'Broadblade', rarity: 5, image: '/images/jinhsi.jpg' },
 
   { id: 'lucy', name: 'Lucy', element: 'Spectro', weaponType: 'Pistols', rarity: 5, image: '' },
 
@@ -139,7 +139,7 @@ export const CHARACTERS = [
   { id: 'lynae', name: 'Lynae', element: 'Spectro', weaponType: 'Pistols', rarity: 5, image: '' },
 
 
-  { id: 'phoebe', name: 'Phoebe', element: 'Spectro', weaponType: 'Rectifier', rarity: 5, image: '' },
+  { id: 'phoebe', name: 'Phoebe', element: 'Spectro', weaponType: 'Rectifier', rarity: 5, image: '/images/phoebe.jpg' },
 
 
   { id: 'shorekeeper', name: 'The Shorekeeper', element: 'Spectro', weaponType: 'Rectifier', rarity: 5, image: '' },
@@ -148,7 +148,7 @@ export const CHARACTERS = [
   { id: 'verina', name: 'Verina', element: 'Spectro', weaponType: 'Rectifier', rarity: 5, image: '' },
 
 
-  { id: 'zani', name: 'Zani', element: 'Spectro', weaponType: 'Broadblade', rarity: 5, image: '' },
+  { id: 'zani', name: 'Zani', element: 'Spectro', weaponType: 'Broadblade', rarity: 5, image: '/images/zani.jpg' },
 
 
   { id: 'rover_spectro', name: 'Rover (Spectro)', element: 'Spectro', weaponType: 'Sword', rarity: 5, image: '' },
