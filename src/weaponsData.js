@@ -88,7 +88,7 @@ export const WEAPONS = [
   { id: 'sig_chisa', name: 'Kumokiri', type: 'Broadblade', rarity: 5, image: '/weapons/kumokiri.jpg' }, // Chisa
 
 
-  { id: 'sig_phrolova', name: 'Lethean Elegy', type: 'Rectifier', rarity: 5, image: '/weapons/'letheanelegy.jpg' }, // Phrolova
+  { id: 'sig_phrolova', name: 'Lethean Elegy', type: 'Rectifier', rarity: 5, image: '/weapons/letheanelegy.jpg' }, // Phrolova
 
 
   { id: 'sig_roccia', name: 'Tragicomedy', type: 'Gauntlets', rarity: 5, image: '/weapons/tragicomedy.jpg' }, // Roccia
