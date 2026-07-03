@@ -4,7 +4,7 @@ export const CHARACTERS = [
 
   { id: 'carlotta', name: 'Carlotta', element: 'Glacio', weaponType: 'Pistols', rarity: 5, image: '' },
 
-  { id: 'hiyuki', name: 'Hiyuki', element: 'Glacio', weaponType: 'Sword', rarity: 5, image: '' },
+  { id: 'hiyuki', name: 'Hiyuki', element: 'Glacio', weaponType: 'Sword', rarity: 5, image: '/images/hiyuki.jpg' },
 
   { id: 'lingyang', name: 'Lingyang', element: 'Glacio', weaponType: 'Gauntlets', rarity: 5, image: '' },
 
