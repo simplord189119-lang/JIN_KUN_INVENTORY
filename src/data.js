@@ -84,7 +84,7 @@ export const CHARACTERS = [
 
   { id: 'changli', name: 'Changli', element: 'Fusion', weaponType: 'Sword', rarity: 5, image: '/images/changli.jpg' },
 
-  { id: 'chixia', name: 'Chixia', element: 'Fusion', weaponType: 'Pistols', rarity: 4, image: '/images/chixia.jph' },
+  { id: 'chixia', name: 'Chixia', element: 'Fusion', weaponType: 'Pistols', rarity: 4, image: '/images/chixia.jpg' },
 
   { id: 'denia', name: 'Denia', element: 'Fusion', weaponType: 'Rectifier', rarity: 5, image: '/images/denia.jpg' },
 
