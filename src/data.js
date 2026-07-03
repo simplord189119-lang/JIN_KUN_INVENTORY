@@ -95,7 +95,7 @@ export const CHARACTERS = [
   { id: 'lupa', name: 'Lupa', element: 'Fusion', weaponType: 'Broadblade', rarity: 5, image: '/images/lupa.jpg' },
 
 
-  { id: 'mornye', name: 'Mornye', element: 'Fusion', weaponType: 'Broadblade', rarity: 5, image: '/images/mornye.jpg' },
+  { id: 'mornye', name: 'Mornye', element: 'Fusion', weaponType: 'Broadblade', rarity: 5, image: '/images/moryne.jpg' },
 
   { id: 'mortefi', name: 'Mortefi', element: 'Fusion', weaponType: 'Pistols', rarity: 4, image: '/images/mortefi.jpg' },
 
