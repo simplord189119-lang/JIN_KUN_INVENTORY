@@ -1096,6 +1096,7 @@ function PullPrioritiesTab({ priorityChars, priorityWeapons, dashPriorityTier, s
   const activeTierMeta = TIERS.find(t => t.id === dashPriorityTier);
   const [detailItem, setDetailItem] = useState(null);
   const [detailKind, setDetailKind] = useState("character");
+  const [prioritySection, setPrioritySection] = useState("character"); // "character" | "weapon"
 
   return (
     <div className="space-y-4">
@@ -1128,13 +1129,35 @@ function PullPrioritiesTab({ priorityChars, priorityWeapons, dashPriorityTier, s
         <p className="text-[11px] mt-2" style={{ color: C.ivoryDim }}>Tap a card for full details.</p>
       </div>
 
-      {/* Characters section */}
-      <div>
-        <div className="text-[11px] font-semibold mb-2 flex items-center gap-1.5" style={{ color: C.ivoryDim }}>
-          <activeTierMeta.Icon size={12} color={activeTierMeta.color} /> CHARACTERS ({priorityChars.length})
-        </div>
-        {priorityChars.length === 0 ? (
-          <p className="text-sm italic" style={{ color: C.ivoryDim }}>None flagged as "{activeTierMeta.label}" yet.</p>
+      {/* Characters / Weapons section switch — same split as the bottom nav */}
+      <div className="flex gap-1.5">
+        <button
+          onClick={() => setPrioritySection("character")}
+          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wide"
+          style={{
+            background: prioritySection === "character" ? C.gold : C.panel2,
+            color: prioritySection === "character" ? C.void : C.ivoryDim,
+            border: `1px solid ${prioritySection === "character" ? C.gold : C.border}`,
+          }}
+        >
+          <Users size={14} /> Characters ({priorityChars.length})
+        </button>
+        <button
+          onClick={() => setPrioritySection("weapon")}
+          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wide"
+          style={{
+            background: prioritySection === "weapon" ? C.gold : C.panel2,
+            color: prioritySection === "weapon" ? C.void : C.ivoryDim,
+            border: `1px solid ${prioritySection === "weapon" ? C.gold : C.border}`,
+          }}
+        >
+          <Package size={14} /> Weapons ({priorityWeapons.length})
+        </button>
+      </div>
+
+      {prioritySection === "character" ? (
+        priorityChars.length === 0 ? (
+          <p className="text-sm italic" style={{ color: C.ivoryDim }}>No characters flagged as "{activeTierMeta.label}" yet.</p>
         ) : (
           <div className="grid grid-cols-2 gap-3">
             {priorityChars.map(c => (
@@ -1156,16 +1179,10 @@ function PullPrioritiesTab({ priorityChars, priorityWeapons, dashPriorityTier, s
               </div>
             ))}
           </div>
-        )}
-      </div>
-
-      {/* Weapons section — kept visually separate from characters */}
-      <div className="pt-2 border-t" style={{ borderColor: C.borderSoft }}>
-        <div className="text-[11px] font-semibold mb-2 mt-3 flex items-center gap-1.5" style={{ color: C.ivoryDim }}>
-          <activeTierMeta.Icon size={12} color={activeTierMeta.color} /> WEAPONS ({priorityWeapons.length})
-        </div>
-        {priorityWeapons.length === 0 ? (
-          <p className="text-sm italic" style={{ color: C.ivoryDim }}>None flagged as "{activeTierMeta.label}" yet.</p>
+        )
+      ) : (
+        priorityWeapons.length === 0 ? (
+          <p className="text-sm italic" style={{ color: C.ivoryDim }}>No weapons flagged as "{activeTierMeta.label}" yet.</p>
         ) : (
           <div className="grid grid-cols-2 gap-3">
             {priorityWeapons.map(w => (
@@ -1184,8 +1201,8 @@ function PullPrioritiesTab({ priorityChars, priorityWeapons, dashPriorityTier, s
               </div>
             ))}
           </div>
-        )}
-      </div>
+        )
+      )}
 
       {detailItem && <DetailModal kind={detailKind} item={detailItem} onClose={() => setDetailItem(null)} />}
     </div>
