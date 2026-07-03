@@ -47,7 +47,7 @@ export const CHARACTERS = [
   { id: 'yangyang', name: 'Yangyang', element: 'Aero', weaponType: 'Sword', rarity: 4, image: '/images/yangyang.jpg' },
 
 
-  { id: 'rover_aero', name: 'Rover (Aero)', element: 'Aero', weaponType: 'Sword', rarity: 5, image: '' },
+  { id: 'rover_aero', name: 'Rover (Aero)', element: 'Aero', weaponType: 'Sword', rarity: 5, image: '/images/aeroroved.jpg' },
 
 
   // Electro
@@ -72,7 +72,7 @@ export const CHARACTERS = [
   { id: 'yinlin', name: 'Yinlin', element: 'Electro', weaponType: 'Rectifier', rarity: 5, image: '/images/yinlin.jpg' },
 
 
-  { id: 'yuanwu', name: 'Yuanwu', element: 'Electro', weaponType: 'Gauntlets', rarity: 4, image: '/images/yianwu.jpg' },
+  { id: 'yuanwu', name: 'Yuanwu', element: 'Electro', weaponType: 'Gauntlets', rarity: 4, image: '/images/yuanwu.jpg' },
 
 
 
@@ -90,12 +90,12 @@ export const CHARACTERS = [
 
   { id: 'encore', name: 'Encore', element: 'Fusion', weaponType: 'Rectifier', rarity: 5, image: '/images/encore.jpg' },
 
-  { id: 'galbrena', name: 'Galbrena', element: 'Fusion', weaponType: 'Pistols', rarity: 5, image: '/images/gelbrena.jpg' },
+  { id: 'galbrena', name: 'Galbrena', element: 'Fusion', weaponType: 'Pistols', rarity: 5, image: '/images/galbrena.jpg' },
 
   { id: 'lupa', name: 'Lupa', element: 'Fusion', weaponType: 'Broadblade', rarity: 5, image: '/images/lupa.jpg' },
 
 
-  { id: 'mornye', name: 'Mornye', element: 'Fusion', weaponType: 'Broadblade', rarity: 5, image: '/images/moryne.jpg' },
+  { id: 'mornye', name: 'Mornye', element: 'Fusion', weaponType: 'Broadblade', rarity: 5, image: '/images/mornye.jpg' },
 
   { id: 'mortefi', name: 'Mortefi', element: 'Fusion', weaponType: 'Pistols', rarity: 4, image: '/images/mortefi.jpg' },
 
@@ -122,7 +122,7 @@ export const CHARACTERS = [
   { id: 'taoqi', name: 'Taoqi', element: 'Havoc', weaponType: 'Broadblade', rarity: 4, image: '/images/taoqi.jpg' },
 
 
-  { id: 'rover_havoc', name: 'Rover (Havoc)', element: 'Havoc', weaponType: 'Sword', rarity: 5, image: '' },
+  { id: 'rover_havoc', name: 'Rover (Havoc)', element: 'Havoc', weaponType: 'Sword', rarity: 5, image: '/images/havocrover.jpg' },
 
 
   { id: 'yangyang_xuanling', name: 'Yangyang: Xuanling', element: 'Havoc', weaponType: 'Sword', rarity: 5, image: '/images/yangyangxuanling.jpg' }, // 3.5
@@ -151,7 +151,7 @@ export const CHARACTERS = [
   { id: 'zani', name: 'Zani', element: 'Spectro', weaponType: 'Broadblade', rarity: 5, image: '/images/zani.jpg' },
 
 
-  { id: 'rover_spectro', name: 'Rover (Spectro)', element: 'Spectro', weaponType: 'Sword', rarity: 5, image: '' },
+  { id: 'rover_spectro', name: 'Rover (Spectro)', element: 'Spectro', weaponType: 'Sword', rarity: 5, image: '/images/spsctrotrover.jpg' },
 
 
   // Announced / not yet released (3.5+) — element & weapon not officially confirmed yet
