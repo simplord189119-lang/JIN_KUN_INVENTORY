@@ -42,6 +42,11 @@ const CHARACTER_BUILDS_BY_NAME = Object.fromEntries(
    until that data is added; nothing crashes in the meantime. */
 const WEAPON_INFO_BY_NAME = {};
 
+/* Pulls in history only store a name string — these let the Tracker tab
+   resolve a pull's element/weapon-type/rarity for rendering a Portrait. */
+const CHAR_BY_NAME = Object.fromEntries(CHARACTERS.map(c => [c.name.toLowerCase(), c]));
+const WEAPON_BY_NAME = Object.fromEntries(WEAPONS.map(w => [w.name.toLowerCase(), w]));
+
 /* ============================================================================
    DESIGN TOKENS — starlight blues, ivory whites, gilt-thorn gold, a whisper
    of deep rose thorn-vine. Tailwind covers layout/spacing/type scale; custom
@@ -91,6 +96,10 @@ const BANNERS = [
   { id: "weapon_standard", label: "Standard Weapon", short: "Weap. Standard", kind: "weapon" },
 ];
 const HARD_PITY = 80;
+/* 1 pull = 1 Radiant Tide (Featured Resonator convene currency) = 160
+   Astrite — this is Kuro's actual exchange rate (Tidal Exchange), not an
+   estimate, so Astrite-spent figures below are exact, not approximated. */
+const ASTRITE_PER_PULL = 160;
 
 /* ============================================================================
    REFERENCE-MATCHED STYLE SHEET — notch-cut panel corners, gold shimmer
@@ -117,7 +126,7 @@ const TABS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "resonators", label: "Resonators", icon: Users },
   { id: "weapons", label: "Weapons", icon: Package },
-  { id: "convene", label: "Convene Import", icon: History },
+  { id: "convene", label: "Tracker", icon: History },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
 ];
 
@@ -231,6 +240,38 @@ function computePity(pullHistory, bannerId) {
     if (p.rarity === 5) sinceFive = 0;
   }
   return sinceFive;
+}
+
+/* Walks a banner's pull history in chronological order and tags every 5★
+   pull with the pity count it took to land (pulls since the previous 5★,
+   inclusive) — this is what the game calls your "Radiant Tide" spend for
+   that specific character. Returns chronological order (oldest first). */
+function annotateFiveStarPity(pullHistory, bannerId) {
+  const bannerPulls = pullHistory
+    .filter(p => p.banner === bannerId)
+    .sort((a, b) => new Date(a.time) - new Date(b.time));
+  let sinceFive = 0;
+  const fiveStars = [];
+  for (const p of bannerPulls) {
+    sinceFive++;
+    if (p.rarity === 5) {
+      fiveStars.push({ ...p, pityAtPull: sinceFive });
+      sinceFive = 0;
+    }
+  }
+  return fiveStars;
+}
+
+/* Sequence/dupe count (S0, S1, S2…) for the 5★ pull at `index` within a
+   chronological list of that banner's 5★ pulls — counts every earlier (and
+   including this) pull sharing the same name. */
+function dupeSequenceAt(fiveStarsChrono, index) {
+  const target = fiveStarsChrono[index];
+  let count = 0;
+  for (let i = 0; i <= index; i++) {
+    if (fiveStarsChrono[i].name === target.name) count++;
+  }
+  return count - 1; // S0 = first copy, S1 = first dupe, etc.
 }
 
 /* Resize + compress an uploaded image client-side so it fits comfortably
@@ -468,6 +509,12 @@ export default function App() {
   // --- dashboard priority view ---
   const [dashPriorityTier, setDashPriorityTier] = useState("must");
 
+  // --- tracker tab ---
+  const [trackerBanner, setTrackerBanner] = useState("char_event");
+  const [selectedPullKey, setSelectedPullKey] = useState(null);
+  const [bannerMeta, setBannerMeta] = useState({}); // { [bannerId]: { featuredName, endsAt } }
+  const [importOpen, setImportOpen] = useState(false);
+
   const saveTimer = useRef(null);
   const skipNextSave = useRef(false);
 
@@ -509,12 +556,14 @@ export default function App() {
         weaponPriorities: {},
         pullHistory: [],
         wallpaper: null,
+        bannerMeta: {},
       });
       skipNextSave.current = true;
       setCharacterPriorities({});
       setWeaponPriorities({});
       setPullHistory([]);
       setWallpaperUrl(null);
+      setBannerMeta({});
       setUsername(uname);
       setUid(cred.user.uid);
       setAuthOpen(false);
@@ -536,12 +585,13 @@ export default function App() {
     try {
       const cred = await signInWithEmailAndPassword(auth, usernameToEmail(uname), authPassword);
       const snap = await getDoc(doc(db, "users", cred.user.uid));
-      const data = snap.exists() ? snap.data() : { characterPriorities: {}, weaponPriorities: {}, pullHistory: [], wallpaper: null };
+      const data = snap.exists() ? snap.data() : { characterPriorities: {}, weaponPriorities: {}, pullHistory: [], wallpaper: null, bannerMeta: {} };
       skipNextSave.current = true;
       setCharacterPriorities(data.characterPriorities || {});
       setWeaponPriorities(data.weaponPriorities || {});
       setPullHistory(data.pullHistory || []);
       setWallpaperUrl(data.wallpaper || null);
+      setBannerMeta(data.bannerMeta || {});
       setUsername(data.username || uname);
       setUid(cred.user.uid);
       setAuthOpen(false);
@@ -570,6 +620,7 @@ export default function App() {
     setWeaponPriorities({});
     setPullHistory([]);
     setWallpaperUrl(null);
+    setBannerMeta({});
     notify("Signed out. Switched to guest mode (not saved).");
   }
 
@@ -579,12 +630,13 @@ export default function App() {
       if (user) {
         try {
           const snap = await getDoc(doc(db, "users", user.uid));
-          const data = snap.exists() ? snap.data() : { characterPriorities: {}, weaponPriorities: {}, pullHistory: [], wallpaper: null };
+          const data = snap.exists() ? snap.data() : { characterPriorities: {}, weaponPriorities: {}, pullHistory: [], wallpaper: null, bannerMeta: {} };
           skipNextSave.current = true;
           setCharacterPriorities(data.characterPriorities || {});
           setWeaponPriorities(data.weaponPriorities || {});
           setPullHistory(data.pullHistory || []);
           setWallpaperUrl(data.wallpaper || null);
+          setBannerMeta(data.bannerMeta || {});
           setUsername(data.username || null);
           setUid(user.uid);
         } catch {
@@ -604,14 +656,14 @@ export default function App() {
     clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
       try {
-        await setDoc(doc(db, "users", uid), { characterPriorities, weaponPriorities, pullHistory }, { merge: true });
+        await setDoc(doc(db, "users", uid), { characterPriorities, weaponPriorities, pullHistory, bannerMeta }, { merge: true });
       } catch {
         notify("Cloud sync failed — will retry on next change.", "error");
       }
     }, 900);
     return () => clearTimeout(saveTimer.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [characterPriorities, weaponPriorities, pullHistory, uid]);
+  }, [characterPriorities, weaponPriorities, pullHistory, bannerMeta, uid]);
 
   /* ---------------------------------------------------------------------
      WALLPAPER — compressed hard enough to comfortably fit inside a
@@ -729,6 +781,39 @@ export default function App() {
     for (const b of BANNERS) out[b.id] = computePity(pullHistory, b.id);
     return out;
   }, [pullHistory]);
+
+  // Real per-banner stats for the Tracker tab: total pulls, Astrite spent
+  // (pulls × 160), average pity-per-5★ (mean of each 5★'s actual pity gap),
+  // 50/50 win rate (character-event banner only), and the full chronological
+  // 5★ history (each annotated with the pity it took and its dupe/S-rank).
+  const bannerInsights = useMemo(() => {
+    const out = {};
+    for (const b of BANNERS) {
+      const totalPulls = pullHistory.filter(p => p.banner === b.id).length;
+      const fiveStarsChrono = annotateFiveStarPity(pullHistory, b.id).map((p, i, arr) => ({
+        ...p,
+        dupeRank: dupeSequenceAt(arr, i),
+      }));
+      const avgPity = fiveStarsChrono.length
+        ? Math.round(fiveStarsChrono.reduce((s, p) => s + p.pityAtPull, 0) / fiveStarsChrono.length)
+        : 0;
+      let winrate = null;
+      if (b.id === "char_event") {
+        const marked = fiveStarsChrono.filter(p => p.won50 === true || p.won50 === false);
+        winrate = marked.length ? Math.round((marked.filter(p => p.won50 === true).length / marked.length) * 100) : null;
+      }
+      out[b.id] = {
+        totalPulls,
+        astrite: totalPulls * ASTRITE_PER_PULL,
+        avgPity,
+        winrate,
+        fiveStarCount: fiveStarsChrono.length,
+        fiveStarsRecent: fiveStarsChrono.slice().reverse(), // most-recent-first
+        pity: pityByBanner[b.id] || 0,
+      };
+    }
+    return out;
+  }, [pullHistory, pityByBanner]);
 
   const priorityChars = useMemo(
     () => CHARACTERS.filter(c => characterPriorities[c.id] === dashPriorityTier),
@@ -885,7 +970,13 @@ export default function App() {
         )}
 
         {activeTab === "convene" && (
-          <ConveneTab
+          <TrackerTab
+            bannerInsights={bannerInsights}
+            trackerBanner={trackerBanner} setTrackerBanner={setTrackerBanner}
+            bannerMeta={bannerMeta} setBannerMeta={setBannerMeta}
+            selectedPullKey={selectedPullKey} setSelectedPullKey={setSelectedPullKey}
+            markFiftyFifty={markFiftyFifty}
+            importOpen={importOpen} setImportOpen={setImportOpen}
             conveneLink={conveneLink} setConveneLink={setConveneLink}
             conveneBusy={conveneBusy} handleLinkImport={handleLinkImport}
             conveneTargetBanner={conveneTargetBanner} setConveneTargetBanner={setConveneTargetBanner}
@@ -983,7 +1074,7 @@ function DashboardTab({ username, pityByBanner, setActiveTab }) {
           Track your convene pity, rank your priority targets, and see your 50/50 luck at a glance. Set priorities on the{" "}
           <button onClick={() => setActiveTab("resonators")} className="underline" style={{ color: C.starlight }}>Resonators</button> and{" "}
           <button onClick={() => setActiveTab("weapons")} className="underline" style={{ color: C.starlight }}>Weapons</button> boards, then import your history from the{" "}
-          <button onClick={() => setActiveTab("convene")} className="underline" style={{ color: C.starlight }}>Convene Import</button> tab.
+          <button onClick={() => setActiveTab("convene")} className="underline" style={{ color: C.starlight }}>Tracker</button> tab.
         </p>
       </div>
 
@@ -1287,10 +1378,17 @@ function RosterGrid({ title, items, search, setSearch, priorities, setTier, kind
 }
 
 /* ============================================================================
-   CONVENE IMPORT TAB
+   TRACKER TAB — Wavemate-style Insights view: banner hero, real Astrite/
+   winrate/pity stats, Radiant Tide allocation detail, Recent Convenes grid,
+   plus the existing import tools (link/JSON/manual) folded into a panel.
 ============================================================================ */
-function ConveneTab(props) {
+function TrackerTab(props) {
   const {
+    bannerInsights, trackerBanner, setTrackerBanner,
+    bannerMeta, setBannerMeta,
+    selectedPullKey, setSelectedPullKey,
+    markFiftyFifty,
+    importOpen, setImportOpen,
     conveneLink, setConveneLink, conveneBusy, handleLinkImport,
     conveneTargetBanner, setConveneTargetBanner,
     jsonPaste, setJsonPaste, handleJsonImport,
@@ -1299,131 +1397,362 @@ function ConveneTab(props) {
     pullHistory, handleClearHistory,
   } = props;
 
+  const banner = BANNERS.find(b => b.id === trackerBanner);
+  const insights = bannerInsights[trackerBanner];
+  const meta = bannerMeta[trackerBanner] || { featuredName: "", endsAt: "" };
+  const featuredChar = meta.featuredName ? CHAR_BY_NAME[meta.featuredName.toLowerCase()] : null;
+  const featuredWeapon = meta.featuredName ? WEAPON_BY_NAME[meta.featuredName.toLowerCase()] : null;
+
+  function updateMeta(patch) {
+    setBannerMeta(prev => ({ ...prev, [trackerBanner]: { ...(prev[trackerBanner] || {}), ...patch } }));
+  }
+
+  let remaining = null;
+  if (meta.endsAt) {
+    const diff = new Date(meta.endsAt).getTime() - Date.now();
+    if (!isNaN(diff)) {
+      remaining = diff <= 0 ? "Ended" : `${Math.floor(diff / 86400000)}d ${Math.floor((diff % 86400000) / 3600000)}h`;
+    }
+  }
+
+  const selectedPull =
+    insights.fiveStarsRecent.find(p => p.id === selectedPullKey) || insights.fiveStarsRecent[0] || null;
+  const lastFour = insights.fiveStarsRecent.slice(0, 4).slice().reverse();
+
   return (
     <div className="space-y-4">
-      <h1 className="text-lg font-bold">Convene Import</h1>
+      <h1 className="text-lg font-bold flex items-center gap-2">
+        <History size={18} color={C.gold} /> Tracker
+      </h1>
 
-      <div className="rounded-xl p-4 space-y-3" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
-        <label className="text-xs font-semibold" style={{ color: C.starlight }}>Target banner for imports without one</label>
-        <select
-          value={conveneTargetBanner}
-          onChange={(e) => setConveneTargetBanner(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-          style={{ background: C.panel2, border: `1px solid ${C.border}`, color: C.ivory }}
-        >
-          {BANNERS.map(b => <option key={b.id} value={b.id}>{b.label}</option>)}
-        </select>
-
-        <label className="text-xs font-semibold" style={{ color: C.starlight }}>Paste your convene link</label>
-        <div className="flex gap-2">
+      {/* Hero */}
+      <div className="jk-notch overflow-hidden relative" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
+        <div className="p-4 pb-2 flex items-start justify-between gap-2">
           <input
-            value={conveneLink}
-            onChange={(e) => setConveneLink(e.target.value)}
-            placeholder="https://aki-gm-resources...#/record?player_id=..."
-            className="flex-1 px-3 py-2 rounded-lg text-sm outline-none"
-            style={{ background: C.panel2, border: `1px solid ${C.border}`, color: C.ivory }}
+            value={meta.featuredName || ""}
+            onChange={(e) => updateMeta({ featuredName: e.target.value })}
+            placeholder="Featured character/weapon name…"
+            className="bg-transparent text-sm font-bold outline-none border-b flex-1 pb-1"
+            style={{ borderColor: C.borderSoft, color: C.ivory }}
           />
-          <button
-            onClick={handleLinkImport}
-            disabled={conveneBusy || !conveneLink.trim()}
-            className="px-3 rounded-lg flex items-center gap-1.5 text-sm font-semibold disabled:opacity-50"
-            style={{ background: C.gold, color: C.void }}
-          >
-            {conveneBusy ? <Loader2 size={15} className="animate-spin" /> : <Link2 size={15} />}
-            Fetch
-          </button>
+          <input
+            type="datetime-local"
+            value={meta.endsAt || ""}
+            onChange={(e) => updateMeta({ endsAt: e.target.value })}
+            className="text-[10px] px-1.5 py-1 rounded outline-none shrink-0"
+            style={{ background: C.panel2, border: `1px solid ${C.border}`, color: C.ivoryDim }}
+          />
         </div>
-        <p className="text-[11px] flex items-start gap-1.5" style={{ color: C.ivoryDim }}>
-          <Info size={12} className="mt-0.5 shrink-0" />
-          Direct fetch often gets blocked by the browser (CORS) since it's calling the game server straight from your device. If it fails, use the JSON paste option below with an exported record file instead.
-        </p>
-      </div>
+        {remaining && (
+          <div className="px-4 mb-1">
+            <span className="text-[11px] font-bold px-2 py-1 rounded-full" style={{ background: `${C.rose}22`, color: C.rose }}>
+              Remaining: {remaining}
+            </span>
+          </div>
+        )}
 
-      <div className="rounded-xl p-4 space-y-3" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
-        <label className="text-xs font-semibold" style={{ color: C.starlight }}>Or paste exported JSON</label>
-        <textarea
-          value={jsonPaste}
-          onChange={(e) => setJsonPaste(e.target.value)}
-          rows={4}
-          placeholder='[{"name":"Jinhsi","rarity":5,"time":"2026-05-01T12:00:00Z"}, ...]'
-          className="w-full px-3 py-2 rounded-lg text-sm outline-none font-mono"
-          style={{ background: C.panel2, border: `1px solid ${C.border}`, color: C.ivory }}
-        />
-        <button
-          onClick={handleJsonImport}
-          className="px-3 py-2 rounded-lg flex items-center gap-1.5 text-sm font-semibold"
-          style={{ background: C.panel2, border: `1px solid ${C.starlight}55`, color: C.starlight }}
-        >
-          <Upload size={15} /> Import JSON
-        </button>
-      </div>
-
-      <div className="rounded-xl p-4 space-y-3" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
-        <label className="text-xs font-semibold" style={{ color: C.starlight }}>Log a single pull manually</label>
-        <div className="flex gap-2 flex-wrap">
-          <select value={manualBanner} onChange={(e) => setManualBanner(e.target.value)} className="px-2 py-2 rounded-lg text-xs outline-none" style={{ background: C.panel2, border: `1px solid ${C.border}`, color: C.ivory }}>
-            {BANNERS.map(b => <option key={b.id} value={b.id}>{b.short}</option>)}
-          </select>
-          <select value={manualRarity} onChange={(e) => setManualRarity(Number(e.target.value))} className="px-2 py-2 rounded-lg text-xs outline-none" style={{ background: C.panel2, border: `1px solid ${C.border}`, color: C.ivory }}>
-            <option value={5}>5★</option>
-            <option value={4}>4★</option>
-            <option value={3}>3★</option>
-          </select>
-          <input
-            value={manualName}
-            onChange={(e) => setManualName(e.target.value)}
-            placeholder="Name"
-            className="flex-1 min-w-[100px] px-3 py-2 rounded-lg text-xs outline-none"
-            style={{ background: C.panel2, border: `1px solid ${C.border}`, color: C.ivory }}
+        <div className="px-4 py-5 flex flex-col items-center">
+          <Portrait
+            name={meta.featuredName || banner.label}
+            rarity={5}
+            color={featuredChar ? (ELEMENTS[featuredChar.element]?.color || C.gold) : C.gold}
+            size="w-28 h-28"
           />
-          <button onClick={handleManualAdd} className="px-3 py-2 rounded-lg flex items-center gap-1 text-xs font-semibold" style={{ background: C.gold, color: C.void }}>
-            <Plus size={14} /> Add
-          </button>
+          <div className="flex items-center gap-1.5 mt-2 flex-wrap justify-center">
+            {featuredChar && <ElementBadge element={featuredChar.element} />}
+            {featuredWeapon && <WeaponBadge type={featuredWeapon.wtype} />}
+            <span className="text-sm font-semibold">{meta.featuredName || "Set featured name above ↑"}</span>
+          </div>
+        </div>
+
+        <div className="absolute bottom-3 right-4 text-sm font-bold" style={{ color: C.starlight }}>
+          {insights.pity}/{HARD_PITY}
         </div>
       </div>
 
-      <div className="rounded-xl p-4" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-sm font-bold" style={{ color: C.starlight }}>Pull History ({pullHistory.length})</h2>
-          {pullHistory.length > 0 && (
-            <button onClick={handleClearHistory} className="text-xs flex items-center gap-1" style={{ color: C.rose }}>
-              <Trash2 size={12} /> Clear
+      {/* Banner sub-tabs */}
+      <div className="flex gap-1.5 overflow-x-auto pb-1">
+        {BANNERS.map(b => {
+          const active = trackerBanner === b.id;
+          return (
+            <button
+              key={b.id}
+              onClick={() => setTrackerBanner(b.id)}
+              className="jk-notch-sm px-3 py-2 text-xs font-bold whitespace-nowrap shrink-0"
+              style={{
+                background: active ? C.gold : C.panel2,
+                color: active ? C.void : C.ivoryDim,
+                border: `1px solid ${active ? C.gold : C.border}`,
+              }}
+            >
+              {b.label}
             </button>
-          )}
+          );
+        })}
+      </div>
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="jk-notch-sm p-3" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
+          <div className="text-[10px] font-semibold" style={{ color: C.ivoryDim }}>ASTRITE SPENT</div>
+          <div className="text-xl font-bold mt-1">{insights.astrite.toLocaleString()}</div>
+          <div className="text-[10px] mt-0.5" style={{ color: C.ivoryDim }}>{insights.totalPulls} pulls × {ASTRITE_PER_PULL}</div>
         </div>
-        {pullHistory.length === 0 ? (
-          <p className="text-sm italic" style={{ color: C.ivoryDim }}>No pulls imported yet.</p>
+        <div className="jk-notch-sm p-3" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
+          <div className="text-[10px] font-semibold" style={{ color: C.ivoryDim }}>WIN RATE (50/50)</div>
+          <div className="text-xl font-bold mt-1" style={{ color: C.rose }}>
+            {insights.winrate === null ? "—" : `${insights.winrate}%`}
+          </div>
+          <div className="text-[10px] mt-0.5" style={{ color: C.ivoryDim }}>
+            {trackerBanner === "char_event" ? "Featured Resonator only" : "N/A on this banner"}
+          </div>
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <div className="jk-notch-sm p-3 text-center" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
+          <div className="text-[10px] font-semibold" style={{ color: C.ivoryDim }}>TOTAL</div>
+          <div className="text-lg font-bold mt-1">{insights.totalPulls}</div>
+        </div>
+        <div className="jk-notch-sm p-3 text-center" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
+          <div className="text-[10px] font-semibold" style={{ color: C.ivoryDim }}>AVG.</div>
+          <div className="text-lg font-bold mt-1" style={{ color: C.gold }}>{insights.avgPity || "—"}</div>
+        </div>
+        <div className="jk-notch-sm p-3 text-center" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
+          <div className="text-[10px] font-semibold" style={{ color: C.ivoryDim }}>PITY</div>
+          <div className="text-lg font-bold mt-1" style={{ color: C.starlight }}>{insights.pity}/{HARD_PITY}</div>
+        </div>
+      </div>
+
+      {/* Radiant Tide allocation */}
+      <div className="jk-notch p-4" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
+        <h2 className="text-sm font-bold mb-3">Radiant Tide Allocation</h2>
+        {!selectedPull ? (
+          <p className="text-sm italic" style={{ color: C.ivoryDim }}>No 5★ pulls logged on this banner yet.</p>
         ) : (
-          <div className="max-h-96 overflow-y-auto space-y-2 pr-1">
-            {pullHistory.slice(0, 150).map(p => {
-              const bannerMeta = BANNERS.find(b => b.id === p.banner);
-              const rarityColor = p.rarity === 5 ? C.five : p.rarity === 4 ? C.four : C.ivoryDim;
+          <div className="flex items-start gap-4">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <Portrait name={selectedPull.name} rarity={5} color={C.gold} size="w-14 h-14" />
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-bold text-sm truncate">{selectedPull.name}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: C.panel2, color: C.ivoryDim }}>
+                    S{selectedPull.dupeRank}
+                  </span>
+                </div>
+                <div className="text-[11px] mt-1.5" style={{ color: C.ivoryDim }}>Radiant Tide</div>
+                <div className="text-lg font-bold leading-tight" style={{ color: C.gold }}>{selectedPull.pityAtPull}</div>
+                <div className="text-[11px] mt-1" style={{ color: C.ivoryDim }}>Astrite</div>
+                <div className="text-sm font-semibold">
+                  {(selectedPull.pityAtPull * ASTRITE_PER_PULL).toLocaleString()}
+                </div>
+              </div>
+            </div>
+            {lastFour.length > 1 && (
+              <div className="flex items-end gap-1.5 h-24 shrink-0">
+                {lastFour.map(p => {
+                  const isSel = p.id === selectedPull.id;
+                  const h = Math.max(8, Math.round((p.pityAtPull / HARD_PITY) * 88));
+                  return (
+                    <button
+                      key={p.id}
+                      onClick={() => setSelectedPullKey(p.id)}
+                      title={`${p.name} · pity ${p.pityAtPull}`}
+                      style={{ width: 14, height: h, background: isSel ? C.gold : C.panel2, borderRadius: 3, border: `1px solid ${isSel ? C.gold : C.border}` }}
+                    />
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Recent Convenes */}
+      <div>
+        <h2 className="text-sm font-bold mb-2">Recent Convenes ({insights.fiveStarCount})</h2>
+        {insights.fiveStarsRecent.length === 0 ? (
+          <p className="text-sm italic" style={{ color: C.ivoryDim }}>No 5★ pulls yet — import your history below.</p>
+        ) : (
+          <div className="grid grid-cols-3 gap-2">
+            {insights.fiveStarsRecent.slice(0, 12).map(p => {
+              const tagWon = p.won50 === true;
+              const tagLost = p.won50 === false;
+              const badgeColor = p.pityAtPull >= 70 ? C.rose : p.pityAtPull >= 40 ? "#E8B34A" : C.starlight;
+              const isSel = selectedPull?.id === p.id;
               return (
-                <div
-                  key={p.id}
-                  className="flex items-center gap-3 py-2.5 px-3 rounded-lg"
-                  style={{ background: C.panel2, borderLeft: `3px solid ${rarityColor}` }}
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold truncate">{p.name}</span>
-                      <RarityStars rarity={p.rarity} />
+                <div key={p.id} className="relative rounded-lg overflow-hidden" style={{ border: `2px solid ${isSel ? C.gold : "transparent"}` }}>
+                  <button onClick={() => setSelectedPullKey(p.id)} className="block w-full text-left">
+                    <Portrait name={p.name} rarity={5} color={C.gold} size="w-full aspect-square" />
+                  </button>
+                  <span className="absolute top-1 right-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: badgeColor, color: C.void }}>
+                    {p.pityAtPull}
+                  </span>
+                  {(tagWon || tagLost) ? (
+                    <span
+                      className="absolute bottom-0 inset-x-0 text-[9px] font-bold text-center py-0.5"
+                      style={{ background: tagWon ? `${C.gold}CC` : `${C.rose}CC`, color: C.void }}
+                    >
+                      {tagWon ? "Rate On" : "Rate Off"}
+                    </span>
+                  ) : trackerBanner === "char_event" ? (
+                    <div className="absolute bottom-0 inset-x-0 flex">
+                      <button
+                        onClick={() => markFiftyFifty(p.id, true)}
+                        className="flex-1 text-[9px] font-bold py-0.5"
+                        style={{ background: `${C.gold}AA`, color: C.void }}
+                      >
+                        Won
+                      </button>
+                      <button
+                        onClick={() => markFiftyFifty(p.id, false)}
+                        className="flex-1 text-[9px] font-bold py-0.5"
+                        style={{ background: `${C.rose}AA`, color: C.void }}
+                      >
+                        Lost
+                      </button>
                     </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      {bannerMeta && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: `${C.starlight}18`, color: C.starlight }}>
-                          {bannerMeta.short}
-                        </span>
-                      )}
-                      <span className="text-[11px]" style={{ color: C.ivoryDim }}>{fmtDate(p.time)}</span>
-                    </div>
-                  </div>
+                  ) : null}
                 </div>
               );
             })}
           </div>
         )}
       </div>
+
+      {/* Import panel */}
+      <button
+        onClick={() => setImportOpen(v => !v)}
+        className="w-full flex items-center justify-center gap-2 py-3 jk-notch-sm text-sm font-bold"
+        style={{ background: C.gold, color: C.void }}
+      >
+        <Upload size={15} /> {importOpen ? "Hide Import" : "Import Convene History"}
+      </button>
+
+      {importOpen && (
+        <div className="space-y-4">
+          <div className="rounded-xl p-4 space-y-3" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
+            <label className="text-xs font-semibold" style={{ color: C.starlight }}>Target banner for imports without one</label>
+            <select
+              value={conveneTargetBanner}
+              onChange={(e) => setConveneTargetBanner(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+              style={{ background: C.panel2, border: `1px solid ${C.border}`, color: C.ivory }}
+            >
+              {BANNERS.map(b => <option key={b.id} value={b.id}>{b.label}</option>)}
+            </select>
+
+            <label className="text-xs font-semibold" style={{ color: C.starlight }}>Paste your convene link</label>
+            <div className="flex gap-2">
+              <input
+                value={conveneLink}
+                onChange={(e) => setConveneLink(e.target.value)}
+                placeholder="https://aki-gm-resources...#/record?player_id=..."
+                className="flex-1 px-3 py-2 rounded-lg text-sm outline-none"
+                style={{ background: C.panel2, border: `1px solid ${C.border}`, color: C.ivory }}
+              />
+              <button
+                onClick={handleLinkImport}
+                disabled={conveneBusy || !conveneLink.trim()}
+                className="px-3 rounded-lg flex items-center gap-1.5 text-sm font-semibold disabled:opacity-50"
+                style={{ background: C.gold, color: C.void }}
+              >
+                {conveneBusy ? <Loader2 size={15} className="animate-spin" /> : <Link2 size={15} />}
+                Fetch
+              </button>
+            </div>
+            <p className="text-[11px] flex items-start gap-1.5" style={{ color: C.ivoryDim }}>
+              <Info size={12} className="mt-0.5 shrink-0" />
+              Direct fetch often gets blocked by the browser (CORS) since it's calling the game server straight from your device. If it fails, use the JSON paste option below with an exported record file instead.
+            </p>
+          </div>
+
+          <div className="rounded-xl p-4 space-y-3" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
+            <label className="text-xs font-semibold" style={{ color: C.starlight }}>Or paste exported JSON</label>
+            <textarea
+              value={jsonPaste}
+              onChange={(e) => setJsonPaste(e.target.value)}
+              rows={4}
+              placeholder='[{"name":"Jinhsi","rarity":5,"time":"2026-05-01T12:00:00Z"}, ...]'
+              className="w-full px-3 py-2 rounded-lg text-sm outline-none font-mono"
+              style={{ background: C.panel2, border: `1px solid ${C.border}`, color: C.ivory }}
+            />
+            <button
+              onClick={handleJsonImport}
+              className="px-3 py-2 rounded-lg flex items-center gap-1.5 text-sm font-semibold"
+              style={{ background: C.panel2, border: `1px solid ${C.starlight}55`, color: C.starlight }}
+            >
+              <Upload size={15} /> Import JSON
+            </button>
+          </div>
+
+          <div className="rounded-xl p-4 space-y-3" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
+            <label className="text-xs font-semibold" style={{ color: C.starlight }}>Log a single pull manually</label>
+            <div className="flex gap-2 flex-wrap">
+              <select value={manualBanner} onChange={(e) => setManualBanner(e.target.value)} className="px-2 py-2 rounded-lg text-xs outline-none" style={{ background: C.panel2, border: `1px solid ${C.border}`, color: C.ivory }}>
+                {BANNERS.map(b => <option key={b.id} value={b.id}>{b.short}</option>)}
+              </select>
+              <select value={manualRarity} onChange={(e) => setManualRarity(Number(e.target.value))} className="px-2 py-2 rounded-lg text-xs outline-none" style={{ background: C.panel2, border: `1px solid ${C.border}`, color: C.ivory }}>
+                <option value={5}>5★</option>
+                <option value={4}>4★</option>
+                <option value={3}>3★</option>
+              </select>
+              <input
+                value={manualName}
+                onChange={(e) => setManualName(e.target.value)}
+                placeholder="Name"
+                className="flex-1 min-w-[100px] px-3 py-2 rounded-lg text-xs outline-none"
+                style={{ background: C.panel2, border: `1px solid ${C.border}`, color: C.ivory }}
+              />
+              <button onClick={handleManualAdd} className="px-3 py-2 rounded-lg flex items-center gap-1 text-xs font-semibold" style={{ background: C.gold, color: C.void }}>
+                <Plus size={14} /> Add
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-xl p-4" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-sm font-bold" style={{ color: C.starlight }}>All Pulls ({pullHistory.length})</h2>
+              {pullHistory.length > 0 && (
+                <button onClick={handleClearHistory} className="text-xs flex items-center gap-1" style={{ color: C.rose }}>
+                  <Trash2 size={12} /> Clear
+                </button>
+              )}
+            </div>
+            {pullHistory.length === 0 ? (
+              <p className="text-sm italic" style={{ color: C.ivoryDim }}>No pulls imported yet.</p>
+            ) : (
+              <div className="max-h-96 overflow-y-auto space-y-2 pr-1">
+                {pullHistory.slice(0, 150).map(p => {
+                  const bMeta = BANNERS.find(b => b.id === p.banner);
+                  const rarityColor = p.rarity === 5 ? C.five : p.rarity === 4 ? C.four : C.ivoryDim;
+                  return (
+                    <div
+                      key={p.id}
+                      className="flex items-center gap-3 py-2.5 px-3 rounded-lg"
+                      style={{ background: C.panel2, borderLeft: `3px solid ${rarityColor}` }}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold truncate">{p.name}</span>
+                          <RarityStars rarity={p.rarity} />
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {bMeta && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: `${C.starlight}18`, color: C.starlight }}>
+                              {bMeta.short}
+                            </span>
+                          )}
+                          <span className="text-[11px]" style={{ color: C.ivoryDim }}>{fmtDate(p.time)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
