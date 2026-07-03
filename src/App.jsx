@@ -333,16 +333,27 @@ function WeaponBadge({ type, size = 22 }) {
 }
 
 function Portrait({ name, image, color, rarity, size = "w-full aspect-square" }) {
+  const [imgFailed, setImgFailed] = useState(false);
+  const showImage = image && !imgFailed;
+
+  // reset the failed flag if a new image URL comes in (e.g. user just fixed the link)
+  useEffect(() => { setImgFailed(false); }, [image]);
+
   return (
     <div
       className={`${size} rounded-lg flex items-center justify-center relative overflow-hidden`}
       style={{
-        background: image ? C.panel2 : `linear-gradient(155deg, ${color}33, ${C.panel2} 70%)`,
+        background: showImage ? C.panel2 : `linear-gradient(155deg, ${color}33, ${C.panel2} 70%)`,
         border: `1px solid ${rarity === 5 ? C.gold + "77" : C.border}`,
       }}
     >
-      {image ? (
-        <img src={image} alt={name} className="w-full h-full object-cover" />
+      {showImage ? (
+        <img
+          src={image}
+          alt={name}
+          className="w-full h-full object-cover"
+          onError={() => setImgFailed(true)}
+        />
       ) : (
         <span className="font-black tracking-wide" style={{ color, fontFamily: "'Orbitron', sans-serif", fontSize: "1.4rem" }}>
           {initials(name)}
