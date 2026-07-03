@@ -1,14 +1,14 @@
 export const WEAPONS = [
   // --- Standard 5-Star Weapons ---
-  { id: 'standard_sword', name: 'Emerald of Genesis', type: 'Sword', rarity: 5, image: '' },
+  { id: 'standard_sword', name: 'Emerald of Genesis', type: 'Sword', rarity: 5, image: '/weapons/emeraldofgenesis.jpg' },
 
-  { id: 'standard_rectifier', name: 'Cosmic Ripples', type: 'Rectifier', rarity: 5, image: '' },
+  { id: 'standard_rectifier', name: 'Cosmic Ripples', type: 'Rectifier', rarity: 5, image: '/weapons/cosmicripples.jpg' },
 
-  { id: 'standard_pistol', name: 'Static Mist', type: 'Pistols', rarity: 5, image: '' },
+  { id: 'standard_pistol', name: 'Static Mist', type: 'Pistols', rarity: 5, image: '/weapons/staticmist.jpg' },
 
-  { id: 'standard_broadblade', name: 'Lustrous Razor', type: 'Broadblade', rarity: 5, image: '' },
+  { id: 'standard_broadblade', name: 'Lustrous Razor', type: 'Broadblade', rarity: 5, image: '/weapons/lustrousrazor.jpg' },
 
-  { id: 'standard_gauntlet', name: 'Abyss Surges', type: 'Gauntlets', rarity: 5, image: '' },
+  { id: 'standard_gauntlet', name: 'Abyss Surges', type: 'Gauntlets', rarity: 5, image: '/weapons/abysssurges.jpg' },
 
   // --- Limited / Signature 5-Star Weapons ---
   // Glacio
