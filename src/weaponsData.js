@@ -14,7 +14,7 @@ export const WEAPONS = [
   // Glacio
   { id: 'sig_carlotta', name: 'The Last Dance', type: 'Pistols', rarity: 5, image: '' }, // Carlotta
 
-  { id: 'sig_hiyuki', name: 'Frostburn', type: 'Sword', rarity: 5, image: '/weapons/frostburn.jpg' }, // Hiyuki
+  { id: 'sig_hiyuki', name: 'Frostburn', type: 'Sword', rarity: 5, image: 'public/images/weapons/frostburn.jpg' }, // Hiyuki
 
   { id: 'sig_lucilla', name: 'Freeze Frame', type: 'Rectifier', rarity: 5, image: '' }, // Lucilla
 
@@ -27,10 +27,10 @@ export const WEAPONS = [
 
 
   // Aero
-  { id: 'sig_cartethyia', name: "Defier's Thorn", type: 'Sword', rarity: 5, image: '/weapons/defiersthorn.jpg' }, // Cartethyia
+  { id: 'sig_cartethyia', name: "Defier's Thorn", type: 'Sword', rarity: 5, image: '' }, // Cartethyia
 
 
-  { id: 'sig_ciaccona', name: 'Woodland Aria', type: 'Pistols', rarity: 5, image: '/weapons/woodlandaria.jpg' }, // Ciaccona
+  { id: 'sig_ciaccona', name: 'Woodland Aria', type: 'Pistols', rarity: 5, image: '' }, // Ciaccona
 
 
   { id: 'sig_iuno', name: "Moongazer's Sigil", type: 'Gauntlets', rarity: 5, image: '' }, // Iuno
@@ -56,7 +56,7 @@ export const WEAPONS = [
   { id: 'sig_rebecca', name: 'Skull Thrasher', type: 'Pistols', rarity: 5, image: '' }, // Rebecca
 
 
-  { id: 'sig_xiangli_yao', name: "Verity's Handle", type: 'Gauntlets', rarity: 5, image: '/weapons/verityshandle.jpg' }, // Xiangli Yao
+  { id: 'sig_xiangli_yao', name: "Verity's Handle", type: 'Gauntlets', rarity: 5, image: '' }, // Xiangli Yao
 
 
   { id: 'sig_yinlin', name: 'Stringmaster', type: 'Rectifier', rarity: 5, image: '' }, // Yinlin
@@ -79,10 +79,10 @@ export const WEAPONS = [
   { id: 'sig_mornye', name: 'Starfield Calibrator', type: 'Broadblade', rarity: 5, image: '' }, // Mornye
 
   // Havoc
-  { id: 'sig_camellya', name: 'Red Spring', type: 'Sword', rarity: 5, image: '/weapons/redspring.jpg' }, // Camellya
+  { id: 'sig_camellya', name: 'Red Spring', type: 'Sword', rarity: 5, image: '' }, // Camellya
 
 
-  { id: 'sig_cantarella', name: 'Whispers of Sirens', type: 'Rectifier', rarity: 5, image: '/weapons/whispersofsirens.jpg' }, // Cantarella
+  { id: 'sig_cantarella', name: 'Whispers of Sirens', type: 'Rectifier', rarity: 5, image: '' }, // Cantarella
 
 
   { id: 'sig_chisa', name: 'Kumokiri', type: 'Broadblade', rarity: 5, image: '' }, // Chisa
@@ -103,7 +103,7 @@ export const WEAPONS = [
 
   { id: 'sig_lucy', name: 'Spectral Trigger', type: 'Pistols', rarity: 5, image: '' }, // Lucy
 
-  { id: 'sig_luuk_herssen', name: "Daybreaker's Spine", type: 'Gauntlets', rarity: 5, image: '/weapons/daybreakersspine.jpg' }, // Luuk Herssen
+  { id: 'sig_luuk_herssen', name: "Daybreaker's Spine", type: 'Gauntlets', rarity: 5, image: '' }, // Luuk Herssen
 
   { id: 'sig_lynae', name: 'Spectrum Blaster', type: 'Pistols', rarity: 5, image: '' }, // Lynae
 
