@@ -1094,6 +1094,9 @@ function DashboardTab({ username, pityByBanner, setActiveTab }) {
 ============================================================================ */
 function PullPrioritiesTab({ priorityChars, priorityWeapons, dashPriorityTier, setDashPriorityTier }) {
   const activeTierMeta = TIERS.find(t => t.id === dashPriorityTier);
+  const [detailItem, setDetailItem] = useState(null);
+  const [detailKind, setDetailKind] = useState("character");
+
   return (
     <div className="space-y-4">
       <h1 className="text-lg font-bold flex items-center gap-2">
@@ -1101,7 +1104,7 @@ function PullPrioritiesTab({ priorityChars, priorityWeapons, dashPriorityTier, s
       </h1>
 
       <div className="jk-notch p-4" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
-        <div className="flex gap-1.5 mb-4">
+        <div className="flex gap-1.5">
           {TIERS.map(t => {
             const active = dashPriorityTier === t.id;
             const TierIcon = t.Icon;
@@ -1122,41 +1125,69 @@ function PullPrioritiesTab({ priorityChars, priorityWeapons, dashPriorityTier, s
             );
           })}
         </div>
-
-        <div className="mb-4">
-          <div className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: C.ivoryDim }}>
-            <activeTierMeta.Icon size={12} color={activeTierMeta.color} /> CHARACTERS ({priorityChars.length})
-          </div>
-          {priorityChars.length === 0 ? (
-            <p className="text-sm italic" style={{ color: C.ivoryDim }}>None flagged.</p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {priorityChars.map(c => (
-                <span key={c.id} className="text-xs px-2.5 py-1 rounded-full flex items-center gap-1.5" style={{ background: `${activeTierMeta.color}18`, color: activeTierMeta.color, border: `1px solid ${activeTierMeta.color}55` }}>
-                  <ElementBadge element={c.element} size={16} /> {c.name}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div>
-          <div className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5" style={{ color: C.ivoryDim }}>
-            <activeTierMeta.Icon size={12} color={activeTierMeta.color} /> WEAPONS ({priorityWeapons.length})
-          </div>
-          {priorityWeapons.length === 0 ? (
-            <p className="text-sm italic" style={{ color: C.ivoryDim }}>None flagged.</p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {priorityWeapons.map(w => (
-                <span key={w.id} className="text-xs px-2.5 py-1 rounded-full flex items-center gap-1.5" style={{ background: `${activeTierMeta.color}18`, color: activeTierMeta.color, border: `1px solid ${activeTierMeta.color}55` }}>
-                  <WeaponBadge type={w.type} size={16} /> {w.name}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
+        <p className="text-[11px] mt-2" style={{ color: C.ivoryDim }}>Tap a card for full details.</p>
       </div>
+
+      {/* Characters section */}
+      <div>
+        <div className="text-[11px] font-semibold mb-2 flex items-center gap-1.5" style={{ color: C.ivoryDim }}>
+          <activeTierMeta.Icon size={12} color={activeTierMeta.color} /> CHARACTERS ({priorityChars.length})
+        </div>
+        {priorityChars.length === 0 ? (
+          <p className="text-sm italic" style={{ color: C.ivoryDim }}>None flagged as "{activeTierMeta.label}" yet.</p>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {priorityChars.map(c => (
+              <div
+                key={c.id}
+                onClick={() => { setDetailItem(c); setDetailKind("character"); }}
+                className="rounded-xl p-3 cursor-pointer active:opacity-80"
+                style={{ background: C.panel, border: `1px solid ${activeTierMeta.color}55` }}
+              >
+                <Portrait name={c.name} image={c.image} rarity={c.rarity} color={ELEMENTS[c.element]?.color || C.starlight} />
+                <div className="mt-2 text-sm font-semibold truncate">{c.name}</div>
+                <div className="flex items-center justify-between mt-1">
+                  <div className="flex items-center gap-1">
+                    <ElementBadge element={c.element} />
+                    <WeaponBadge type={c.weaponType} />
+                  </div>
+                  <RarityStars rarity={c.rarity} />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Weapons section — kept visually separate from characters */}
+      <div className="pt-2 border-t" style={{ borderColor: C.borderSoft }}>
+        <div className="text-[11px] font-semibold mb-2 mt-3 flex items-center gap-1.5" style={{ color: C.ivoryDim }}>
+          <activeTierMeta.Icon size={12} color={activeTierMeta.color} /> WEAPONS ({priorityWeapons.length})
+        </div>
+        {priorityWeapons.length === 0 ? (
+          <p className="text-sm italic" style={{ color: C.ivoryDim }}>None flagged as "{activeTierMeta.label}" yet.</p>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {priorityWeapons.map(w => (
+              <div
+                key={w.id}
+                onClick={() => { setDetailItem(w); setDetailKind("weapon"); }}
+                className="rounded-xl p-3 cursor-pointer active:opacity-80"
+                style={{ background: C.panel, border: `1px solid ${activeTierMeta.color}55` }}
+              >
+                <Portrait name={w.name} image={w.image} rarity={w.rarity} color={C.starlight} />
+                <div className="mt-2 text-sm font-semibold truncate">{w.name}</div>
+                <div className="flex items-center justify-between mt-1">
+                  <WeaponBadge type={w.type} />
+                  <RarityStars rarity={w.rarity} />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {detailItem && <DetailModal kind={detailKind} item={detailItem} onClose={() => setDetailItem(null)} />}
     </div>
   );
 }
