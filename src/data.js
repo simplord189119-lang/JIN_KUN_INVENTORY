@@ -10,23 +10,23 @@ export const CHARACTERS = [
 
   { id: 'lucilla', name: 'Lucilla', element: 'Glacio', weaponType: 'Rectifier', rarity: 5, image: '/images/lucilla.jpg' },
 
-  { id: 'sanhua', name: 'Sanhua', element: 'Glacio', weaponType: 'Sword', rarity: 4, image: '' },
+  { id: 'sanhua', name: 'Sanhua', element: 'Glacio', weaponType: 'Sword', rarity: 4, image: '/images/sanhua.jpg' },
 
-  { id: 'suisui', name: 'Suisui', element: 'Glacio', weaponType: 'Rectifier', rarity: 5, image: '' }
+  { id: 'suisui', name: 'Suisui', element: 'Glacio', weaponType: 'Rectifier', rarity: 5, image: '/images/suisui.jpg' }
 , // 3.5
 
-  { id: 'youhu', name: 'Youhu', element: 'Glacio', weaponType: 'Gauntlets', rarity: 4, image: '' },
+  { id: 'youhu', name: 'Youhu', element: 'Glacio', weaponType: 'Gauntlets', rarity: 4, image: '/images/youhu.jpg' },
 
-  { id: 'zhezhi', name: 'Zhezhi', element: 'Glacio', weaponType: 'Rectifier', rarity: 5, image: '' },
+  { id: 'zhezhi', name: 'Zhezhi', element: 'Glacio', weaponType: 'Rectifier', rarity: 5, image: '/images/zhezhi.jpg' },
 
 
   // Aero
-  { id: 'aalto', name: 'Aalto', element: 'Aero', weaponType: 'Pistols', rarity: 4, image: '' },
+  { id: 'aalto', name: 'Aalto', element: 'Aero', weaponType: 'Pistols', rarity: 4, image: '/images/aalto.jpg' },
 
   { id: 'cartethyia', name: 'Cartethyia', element: 'Aero', weaponType: 'Sword', rarity: 5, image: '/images/cartethyia.jpg' },
 
 
-  { id: 'ciaccona', name: 'Ciaccona', element: 'Aero', weaponType: 'Pistols', rarity: 5, image: '' },
+  { id: 'ciaccona', name: 'Ciaccona', element: 'Aero', weaponType: 'Pistols', rarity: 5, image: '/images/ciaccona.jpg' },
 
 
   { id: 'iuno', name: 'Iuno', element: 'Aero', weaponType: 'Gauntlets', rarity: 5, image: '/images/luno.jpg' },
@@ -54,22 +54,22 @@ export const CHARACTERS = [
   { id: 'augusta', name: 'Augusta', element: 'Electro', weaponType: 'Broadblade', rarity: 5, image: '/images/augusta.jpg' },
 
 
-  { id: 'buling', name: 'Buling', element: 'Electro', weaponType: 'Rectifier', rarity: 4, image: '' },
+  { id: 'buling', name: 'Buling', element: 'Electro', weaponType: 'Rectifier', rarity: 4, image: '/images/buling.jpg' },
 
 
   { id: 'calcharo', name: 'Calcharo', element: 'Electro', weaponType: 'Broadblade', rarity: 5, image: '/images/calcharo.jpg' },
 
 
-  { id: 'lumi', name: 'Lumi', element: 'Electro', weaponType: 'Broadblade', rarity: 4, image: '' },
+  { id: 'lumi', name: 'Lumi', element: 'Electro', weaponType: 'Broadblade', rarity: 4, image: '/images/lumi.jpg' },
 
 
-  { id: 'rebecca', name: 'Rebecca', element: 'Electro', weaponType: 'Pistols', rarity: 5, image: '' },
+  { id: 'rebecca', name: 'Rebecca', element: 'Electro', weaponType: 'Pistols', rarity: 5, image: '/images/rebecca.jpg' },
 
 
-  { id: 'xiangli_yao', name: 'Xiangli Yao', element: 'Electro', weaponType: 'Gauntlets', rarity: 5, image: '' },
+  { id: 'xiangli_yao', name: 'Xiangli Yao', element: 'Electro', weaponType: 'Gauntlets', rarity: 5, image: '/images/xiangliyao.jpg' },
 
 
-  { id: 'yinlin', name: 'Yinlin', element: 'Electro', weaponType: 'Rectifier', rarity: 5, image: '' },
+  { id: 'yinlin', name: 'Yinlin', element: 'Electro', weaponType: 'Rectifier', rarity: 5, image: '/images/yinlin.jpg' },
 
 
   { id: 'yuanwu', name: 'Yuanwu', element: 'Electro', weaponType: 'Gauntlets', rarity: 4, image: '/images/yianwu.jpg' },
@@ -84,7 +84,7 @@ export const CHARACTERS = [
 
   { id: 'changli', name: 'Changli', element: 'Fusion', weaponType: 'Sword', rarity: 5, image: '/images/changli.jpg' },
 
-  { id: 'chixia', name: 'Chixia', element: 'Fusion', weaponType: 'Pistols', rarity: 4, image: '' },
+  { id: 'chixia', name: 'Chixia', element: 'Fusion', weaponType: 'Pistols', rarity: 4, image: '/images/chixia.jph' },
 
   { id: 'denia', name: 'Denia', element: 'Fusion', weaponType: 'Rectifier', rarity: 5, image: '/images/denia.jpg' },
 
@@ -113,7 +113,7 @@ export const CHARACTERS = [
   { id: 'danjin', name: 'Danjin', element: 'Havoc', weaponType: 'Sword', rarity: 4, image: '/images/danjin.jpg' },
 
 
-  { id: 'phrolova', name: 'Phrolova', element: 'Havoc', weaponType: 'Rectifier', rarity: 5, image: '' },
+  { id: 'phrolova', name: 'Phrolova', element: 'Havoc', weaponType: 'Rectifier', rarity: 5, image: '/images/phrolova.jpg' },
 
 
   { id: 'roccia', name: 'Roccia', element: 'Havoc', weaponType: 'Gauntlets', rarity: 5, image: '/images/roccia.jpg' },
@@ -125,15 +125,15 @@ export const CHARACTERS = [
   { id: 'rover_havoc', name: 'Rover (Havoc)', element: 'Havoc', weaponType: 'Sword', rarity: 5, image: '' },
 
 
-  { id: 'yangyang_xuanling', name: 'Yangyang: Xuanling', element: 'Havoc', weaponType: 'Sword', rarity: 5, image: '' }, // 3.5
+  { id: 'yangyang_xuanling', name: 'Yangyang: Xuanling', element: 'Havoc', weaponType: 'Sword', rarity: 5, image: '/images/yangyangxuanling.jpg' }, // 3.5
 
   // Spectro
   { id: 'jinhsi', name: 'Jinhsi', element: 'Spectro', weaponType: 'Broadblade', rarity: 5, image: '/images/jinhsi.jpg' },
 
-  { id: 'lucy', name: 'Lucy', element: 'Spectro', weaponType: 'Pistols', rarity: 5, image: '' },
+  { id: 'lucy', name: 'Lucy', element: 'Spectro', weaponType: 'Pistols', rarity: 5, image: '/images/lucy.jpg' },
 
 
-  { id: 'luuk_herssen', name: 'Luuk Herssen', element: 'Spectro', weaponType: 'Gauntlets', rarity: 5, image: '' },
+  { id: 'luuk_herssen', name: 'Luuk Herssen', element: 'Spectro', weaponType: 'Gauntlets', rarity: 5, image: '/images/luke.jpg' },
 
 
   { id: 'lynae', name: 'Lynae', element: 'Spectro', weaponType: 'Pistols', rarity: 5, image: '/images/lynae.jpg' },
@@ -155,8 +155,11 @@ export const CHARACTERS = [
 
 
   // Announced / not yet released (3.5+) — element & weapon not officially confirmed yet
-  { id: 'suoming', name: 'Suoming', element: '', weaponType: '', rarity: 5, image: '' },
-  { id: 'jingran', name: 'Jingran', element: '', weaponType: '', rarity: 5, image: '' },
-  { id: 'qingxiao', name: 'Qingxiao', element: '', weaponType: '', rarity: 5, image: '' },
-  { id: 'hsin', name: 'Hsin', element: '', weaponType: '', rarity: 5, image: '' },
+  { id: 'suoming', name: 'Suoming', element: '', weaponType: '', rarity: 5, image: '/images/suoming.jpg' },
+
+  { id: 'jingran', name: 'Jingran', element: '', weaponType: '', rarity: 5, image: '/images/jingran.jpg' },
+
+  { id: 'qingxiao', name: 'Qingxiao', element: '', weaponType: '', rarity: 5, image: '/images/qingxiao.jpg' },
+
+  { id: 'hsin', name: 'Hsin', element: '', weaponType: '', rarity: 5, image: '/images/hsin.jpg' },
 ];
