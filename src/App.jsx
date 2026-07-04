@@ -16,6 +16,7 @@ import { auth, db } from "./firebase.js";
 import { CHARACTERS } from "./data.js";
 import { WEAPONS } from "./weaponsData.js";
 import { BUILD_DATA } from "./buildData.js";
+import { WEAPON_INFO } from "./weaponsInfo.js";
 
 /* ============================================================================
    BUILD LOOKUPS — DetailModal looks characters/weapons up by lowercased
@@ -35,11 +36,19 @@ const CHARACTER_BUILDS_BY_NAME = Object.fromEntries(
     .filter(Boolean)
 );
 
-/* Weapon-specific build info (crit/buff text, which character it belongs
-   to) isn't in buildData.js yet — BUILD_DATA only covers characters. Left
-   empty so DetailModal's existing "Not added yet" fallback handles weapons
-   until that data is added; nothing crashes in the meantime. */
-const WEAPON_INFO_BY_NAME = {};
+/* Weapon-specific build info (owner + crit/buff text) lives in
+   weaponsInfo.js, keyed by the same `id` as WEAPONS in weaponsData.js.
+   Re-key it by lowercased weapon name here, same pattern as above, so
+   DetailModal can look it up the same way it looks up character builds. */
+const WEAPON_INFO_BY_NAME = Object.fromEntries(
+  WEAPONS
+    .map((w) => {
+      const info = WEAPON_INFO.find((x) => x.id === w.id);
+      if (!info) return null;
+      return [w.name.toLowerCase(), { ownerName: info.ownerName, buff: info.buff }];
+    })
+    .filter(Boolean)
+);
 
 /* Pulls in history only store a name string — these let the Tracker tab
    resolve a pull's element/weapon-type/rarity for rendering a Portrait. */
@@ -2123,7 +2132,7 @@ function AstriteCalculatorTab(props) {
               {astriteCalc.claimableTotal.toLocaleString()} <span className="text-xs font-normal" style={{ color: C.ivoryDim }}>({astriteCalc.claimablePulls} pulls)</span>
             </div>
           </div>
-        </div>
+       </div>
 
         {astriteSources.length === 0 ? (
           <p className="text-sm italic" style={{ color: C.ivoryDim }}>No sources yet — add dailies, weekly challenges, or one-time event rewards.</p>
@@ -2406,4 +2415,4 @@ function AuthModal({ mode, setMode, username, setUsername, password, setPassword
       </div>
     </div>
   );
-}
+} 
