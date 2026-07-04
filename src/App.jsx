@@ -101,6 +101,18 @@ const HARD_PITY = 80;
    estimate, so Astrite-spent figures below are exact, not approximated. */
 const ASTRITE_PER_PULL = 160;
 
+/* Kuro's gacha-record API keys each convene pool by a numeric
+   "cardPoolType". Mapping these to our banner ids lets one link import
+   pull every pool at once (char event, weapon event, AND both standard
+   pools) instead of forcing everything into whichever single banner
+   happened to be selected in a dropdown. */
+const CARD_POOL_TYPE_TO_BANNER = {
+  "1": "char_event",
+  "2": "weapon_event",
+  "3": "char_standard",
+  "4": "weapon_standard",
+};
+
 /* ============================================================================
    REFERENCE-MATCHED STYLE SHEET — notch-cut panel corners, gold shimmer
    title text, glowing active-tab underline, and styled auth inputs. Kept
@@ -193,7 +205,7 @@ function parseConveneLink(raw) {
   }
 }
 
-async function attemptDirectFetch(parsed) {
+async function attemptDirectFetch(parsed, cardPoolType = "1") {
   const endpoint = "https://gmserver-api.aki-game2.net/gacha/record/query";
   const res = await fetch(endpoint, {
     method: "POST",
@@ -204,17 +216,36 @@ async function attemptDirectFetch(parsed) {
       languageCode: parsed.lang || "en",
       recordId: parsed.recordId,
       cardPoolId: parsed.resourcesId,
-      cardPoolType: "1",
+      cardPoolType,
     }),
   });
   if (!res.ok) throw new Error(`Server responded with ${res.status}`);
   return res.json();
 }
 
-function makePull(banner, rarity, name, time, won50 = null) {
+/* A pull only "wins" or "loses" a 50/50 on an EVENT banner (char_event /
+   weapon_event) — standard banners have no rate-up to lose against.
+   `sig_*` ids are limited/signature units, only obtainable as the rate-up
+   on their own event banner. `standard_*` ids are the permanent pool —
+   landing one on an event banner IS the 50/50 loss. Unrecognized names
+   (not yet in data.js/weaponsData.js) return null so the UI can still show
+   a manual pick instead of silently guessing wrong. */
+function autoWon50(bannerId, name) {
+  const bannerMeta = BANNERS.find(b => b.id === bannerId);
+  if (!bannerMeta || (bannerId !== "char_event" && bannerId !== "weapon_event")) return null;
+  const key = (name || "").toLowerCase();
+  const match = bannerMeta.kind === "weapon" ? WEAPON_BY_NAME[key] : CHAR_BY_NAME[key];
+  if (!match?.id) return null;
+  if (match.id.startsWith("sig_")) return true;
+  if (match.id.startsWith("standard_")) return false;
+  return null;
+}
+
+function makePull(banner, rarity, name, time, won50 = undefined) {
+  const resolvedWon50 = won50 !== undefined ? won50 : (rarity === 5 ? autoWon50(banner, name) : null);
   return {
     id: `${banner}-${time}-${Math.random().toString(36).slice(2, 8)}`,
-    banner, rarity, name, time, won50,
+    banner, rarity, name, time, won50: resolvedWon50,
   };
 }
 
@@ -225,9 +256,52 @@ function normalizeRecord(rec, fallbackBanner) {
   const rarity = Number(rec.rarity ?? rec.qualityLevel ?? rec.rank ?? rec.star ?? 0);
   const name = rec.name ?? rec.resourceName ?? rec.itemName ?? rec.characterName ?? null;
   const time = rec.time ?? rec.date ?? rec.gachaTime ?? new Date().toISOString();
-  const banner = rec.banner ?? fallbackBanner;
+  // Prefer the record's OWN pool identifier over the dropdown fallback —
+  // this is what makes a single export/paste land pulls on the correct
+  // banner (including weapon standard) instead of dumping everything into
+  // whatever banner happened to be selected.
+  const rawPoolType = rec.cardPoolType ?? rec.card_pool_type ?? rec.poolType ?? rec.gachaType ?? rec.pool_type;
+  const banner = rec.banner ?? CARD_POOL_TYPE_TO_BANNER[String(rawPoolType)] ?? fallbackBanner;
   if (!rarity || !name) return null;
   return makePull(banner, rarity, String(name), new Date(time).toISOString());
+}
+
+/* One-shot cleanup for history imported before the fixes above existed,
+   back when every pull from a link/JSON import got force-tagged with
+   whichever single banner was selected in the dropdown. This can't
+   un-mix which STANDARD pulls came from which pool (both an event banner
+   loss and the standard banner itself can legitimately produce a
+   standard_* unit) — but it CAN safely fix two things that are always
+   unambiguous:
+     1. A sig_* unit only ever comes from its own event banner, so any
+        sig_* pull sitting under the wrong banner gets moved to the
+        correct one.
+     2. Every 5★ pull's won50 gets recomputed from scratch via autoWon50,
+        replacing old blank/manual marks with an accurate automatic result.
+*/
+function reclassifyPullHistory(pullHistory) {
+  let changed = 0;
+  const next = pullHistory.map((p) => {
+    let banner = p.banner;
+    if (p.rarity === 5) {
+      const key = (p.name || "").toLowerCase();
+      const char = CHAR_BY_NAME[key];
+      const weapon = WEAPON_BY_NAME[key];
+      const match = char || weapon;
+      if (match?.id?.startsWith("sig_")) {
+        const kind = char ? "character" : "weapon";
+        const correctBanner = BANNERS.find(b => b.kind === kind && b.id.endsWith("_event"));
+        if (correctBanner && correctBanner.id !== banner) banner = correctBanner.id;
+      }
+    }
+    const won50 = p.rarity === 5 ? autoWon50(banner, p.name) : null;
+    if (banner !== p.banner || won50 !== p.won50) {
+      changed++;
+      return { ...p, banner, won50 };
+    }
+    return p;
+  });
+  return { next, changed };
 }
 
 function computePity(pullHistory, bannerId) {
@@ -737,12 +811,25 @@ export default function App() {
     if (!parsed) { notify("That doesn't look like a valid convene link.", "error"); return; }
     setConveneBusy(true);
     try {
-      const json = await attemptDirectFetch(parsed);
-      const records = json?.data || json?.list || [];
-      const imported = records.map(r => normalizeRecord(r, conveneTargetBanner)).filter(Boolean);
-      if (!imported.length) { notify("No pulls found in that response.", "error"); return; }
+      // Fetch every convene pool (char event, weapon event, char standard,
+      // weapon standard) with the same credentials instead of just one —
+      // this is what lets a single pasted link cover your full history,
+      // weapon standard included, in one go.
+      const poolTypes = Object.keys(CARD_POOL_TYPE_TO_BANNER);
+      const results = await Promise.allSettled(poolTypes.map(pt => attemptDirectFetch(parsed, pt)));
+      let imported = [];
+      let anySucceeded = false;
+      results.forEach((r, i) => {
+        if (r.status !== "fulfilled") return;
+        anySucceeded = true;
+        const bannerId = CARD_POOL_TYPE_TO_BANNER[poolTypes[i]];
+        const records = r.value?.data || r.value?.list || [];
+        imported = imported.concat(records.map(rec => normalizeRecord(rec, bannerId)).filter(Boolean));
+      });
+      if (!anySucceeded) throw new Error("all pools failed");
+      if (!imported.length) { notify("No pulls found across any banner.", "error"); return; }
       setPullHistory(prev => [...imported, ...prev].sort((a, b) => new Date(b.time) - new Date(a.time)));
-      notify(`Imported ${imported.length} pulls.`);
+      notify(`Imported ${imported.length} pulls across all banners.`);
       setConveneLink("");
     } catch {
       notify("Direct fetch failed (browsers usually block this due to CORS). Try the JSON paste option below instead.", "error");
@@ -782,6 +869,12 @@ export default function App() {
 
   function markFiftyFifty(id, won) {
     setPullHistory(prev => prev.map(p => (p.id === id ? { ...p, won50: won } : p)));
+  }
+
+  function handleRecalculate() {
+    const { next, changed } = reclassifyPullHistory(pullHistory);
+    setPullHistory(next);
+    notify(changed ? `Recalculated — fixed ${changed} pull${changed === 1 ? "" : "s"}.` : "Everything already checks out — no changes needed.");
   }
 
   /* ---------------------------------------------------------------------
@@ -997,6 +1090,7 @@ export default function App() {
             manualName={manualName} setManualName={setManualName}
             handleManualAdd={handleManualAdd}
             pullHistory={pullHistory} handleClearHistory={handleClearHistory}
+            handleRecalculate={handleRecalculate}
           />
         )}
 
@@ -1453,7 +1547,7 @@ function TrackerTab(props) {
     jsonPaste, setJsonPaste, handleJsonImport,
     manualBanner, setManualBanner, manualRarity, setManualRarity,
     manualName, setManualName, handleManualAdd,
-    pullHistory, handleClearHistory,
+    pullHistory, handleClearHistory, handleRecalculate,
   } = props;
 
   const banner = BANNERS.find(b => b.id === trackerBanner);
@@ -1710,16 +1804,6 @@ function TrackerTab(props) {
       {importOpen && (
         <div className="space-y-4">
           <div className="rounded-xl p-4 space-y-3" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
-            <label className="text-xs font-semibold" style={{ color: C.starlight }}>Target banner for imports without one</label>
-            <select
-              value={conveneTargetBanner}
-              onChange={(e) => setConveneTargetBanner(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-              style={{ background: C.panel2, border: `1px solid ${C.border}`, color: C.ivory }}
-            >
-              {BANNERS.map(b => <option key={b.id} value={b.id}>{b.label}</option>)}
-            </select>
-
             <label className="text-xs font-semibold" style={{ color: C.starlight }}>Paste your convene link</label>
             <div className="flex gap-2">
               <input
@@ -1741,12 +1825,21 @@ function TrackerTab(props) {
             </div>
             <p className="text-[11px] flex items-start gap-1.5" style={{ color: C.ivoryDim }}>
               <Info size={12} className="mt-0.5 shrink-0" />
-              Direct fetch often gets blocked by the browser (CORS) since it's calling the game server straight from your device. If it fails, use the JSON paste option below with an exported record file instead.
+              One link pulls every banner at once — Character Event, Weapon Event, and both Standard pools — and tags each pull correctly on its own. Direct fetch often gets blocked by the browser (CORS) since it's calling the game server straight from your device; if it fails, use the JSON paste option below with an exported record file instead.
             </p>
           </div>
 
           <div className="rounded-xl p-4 space-y-3" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
             <label className="text-xs font-semibold" style={{ color: C.starlight }}>Or paste exported JSON</label>
+            <label className="text-[11px] font-semibold block" style={{ color: C.ivoryDim }}>Fallback banner (only used if the JSON doesn't identify its own pool)</label>
+            <select
+              value={conveneTargetBanner}
+              onChange={(e) => setConveneTargetBanner(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+              style={{ background: C.panel2, border: `1px solid ${C.border}`, color: C.ivory }}
+            >
+              {BANNERS.map(b => <option key={b.id} value={b.id}>{b.label}</option>)}
+            </select>
             <textarea
               value={jsonPaste}
               onChange={(e) => setJsonPaste(e.target.value)}
@@ -1792,9 +1885,14 @@ function TrackerTab(props) {
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-sm font-bold" style={{ color: C.starlight }}>All Pulls ({pullHistory.length})</h2>
               {pullHistory.length > 0 && (
-                <button onClick={handleClearHistory} className="text-xs flex items-center gap-1" style={{ color: C.rose }}>
-                  <Trash2 size={12} /> Clear
-                </button>
+                <div className="flex items-center gap-3">
+                  <button onClick={handleRecalculate} className="text-xs flex items-center gap-1" style={{ color: C.starlight }} title="Fix mistagged banners and recompute pity + 50/50 results">
+                    <Sparkles size={12} /> Recalculate
+                  </button>
+                  <button onClick={handleClearHistory} className="text-xs flex items-center gap-1" style={{ color: C.rose }}>
+                    <Trash2 size={12} /> Clear
+                  </button>
+                </div>
               )}
             </div>
             {pullHistory.length === 0 ? (
@@ -1857,7 +1955,7 @@ function AnalyticsTab({ pityByBanner, pieData, fiftyFiftyPulls, markFiftyFifty }
 
       <div className="rounded-xl p-4" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
         <h2 className="text-sm font-bold" style={{ color: C.starlight }}>50/50 RECORD</h2>
-        <p className="text-xs mb-3" style={{ color: C.ivoryDim }}>Character Event banner only. Mark wins/losses in the table below.</p>
+        <p className="text-xs mb-3" style={{ color: C.ivoryDim }}>Character Event banner only. Detected automatically (limited = win, standard = loss) — manual buttons only appear for names not yet recognized.</p>
 
         {total === 0 ? (
           <div className="flex flex-col items-center py-6">
@@ -1883,22 +1981,31 @@ function AnalyticsTab({ pityByBanner, pieData, fiftyFiftyPulls, markFiftyFifty }
             {fiftyFiftyPulls.map(p => (
               <div key={p.id} className="flex items-center justify-between text-xs py-1.5 px-2 rounded" style={{ background: C.panel2 }}>
                 <span className="truncate">{p.name} <span style={{ color: C.ivoryDim }}>· {fmtDate(p.time)}</span></span>
-                <div className="flex gap-1 shrink-0">
-                  <button
-                    onClick={() => markFiftyFifty(p.id, true)}
-                    className="px-2 py-0.5 rounded text-[10px] font-semibold"
-                    style={{ background: p.won50 === true ? C.five : "transparent", color: p.won50 === true ? C.void : C.five, border: `1px solid ${C.five}66` }}
+                {p.won50 === true || p.won50 === false ? (
+                  <span
+                    className="px-2 py-0.5 rounded text-[10px] font-bold shrink-0"
+                    style={{ background: p.won50 ? `${C.five}CC` : `${C.rose}CC`, color: C.void }}
                   >
-                    Won
-                  </button>
-                  <button
-                    onClick={() => markFiftyFifty(p.id, false)}
-                    className="px-2 py-0.5 rounded text-[10px] font-semibold"
-                    style={{ background: p.won50 === false ? C.rose : "transparent", color: p.won50 === false ? C.void : C.rose, border: `1px solid ${C.rose}66` }}
-                  >
-                    Lost
-                  </button>
-                </div>
+                    {p.won50 ? "Won" : "Lost"}
+                  </span>
+                ) : (
+                  <div className="flex gap-1 shrink-0">
+                    <button
+                      onClick={() => markFiftyFifty(p.id, true)}
+                      className="px-2 py-0.5 rounded text-[10px] font-semibold"
+                      style={{ border: `1px solid ${C.five}66`, color: C.five }}
+                    >
+                      Won
+                    </button>
+                    <button
+                      onClick={() => markFiftyFifty(p.id, false)}
+                      className="px-2 py-0.5 rounded text-[10px] font-semibold"
+                      style={{ border: `1px solid ${C.rose}66`, color: C.rose }}
+                    >
+                      Lost
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -2088,15 +2195,4 @@ function AuthModal({ mode, setMode, username, setUsername, password, setPassword
 
           <button
             onClick={onSubmit}
-            disabled={busy}
-            className="w-full flex items-center justify-center gap-1.5 py-2.5 jk-notch-sm text-sm font-bold disabled:opacity-60"
-            style={{ background: C.gold, color: C.void }}
-          >
-            {busy ? <Loader2 size={15} className="animate-spin" /> : mode === "login" ? <LogIn size={15} /> : <UserPlus size={15} />}
-            {mode === "login" ? "Sign In" : "Create Account"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+        
