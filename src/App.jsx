@@ -1513,6 +1513,7 @@ function TrackerTab(props) {
         <div className="px-4 py-5 flex flex-col items-center">
           <Portrait
             name={meta.featuredName || banner.label}
+            image={featuredChar?.image || featuredWeapon?.image || ""}
             rarity={5}
             color={featuredChar ? (ELEMENTS[featuredChar.element]?.color || C.gold) : C.gold}
             size="w-28 h-28"
@@ -1590,7 +1591,13 @@ function TrackerTab(props) {
         ) : (
           <div className="flex items-start gap-4">
             <div className="flex items-center gap-3 flex-1 min-w-0">
-              <Portrait name={selectedPull.name} rarity={5} color={C.gold} size="w-14 h-14" />
+              <Portrait
+                name={selectedPull.name}
+                image={CHAR_BY_NAME[selectedPull.name.toLowerCase()]?.image || WEAPON_BY_NAME[selectedPull.name.toLowerCase()]?.image || ""}
+                rarity={5}
+                color={C.gold}
+                size="w-14 h-14"
+              />
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-bold text-sm truncate">{selectedPull.name}</span>
@@ -1632,16 +1639,29 @@ function TrackerTab(props) {
         {insights.fiveStarsRecent.length === 0 ? (
           <p className="text-sm italic" style={{ color: C.ivoryDim }}>No 5★ pulls yet — import your history below.</p>
         ) : (
-          <div className="grid grid-cols-3 gap-2">
-            {insights.fiveStarsRecent.slice(0, 12).map(p => {
+          <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-4 px-4 snap-x snap-mandatory">
+            {insights.fiveStarsRecent.slice(0, 30).map(p => {
               const tagWon = p.won50 === true;
               const tagLost = p.won50 === false;
               const badgeColor = p.pityAtPull >= 70 ? C.rose : p.pityAtPull >= 40 ? "#E8B34A" : C.starlight;
               const isSel = selectedPull?.id === p.id;
+              // Auto-resolve portrait: matches this pull's name against your
+              // character/weapon data by name, case-insensitively. As soon as
+              // a character/weapon has an `image` set in data.js/weaponsData.js,
+              // every past AND future pull with that name shows it automatically
+              // — no manual per-pull work needed.
+              const matchedChar = CHAR_BY_NAME[p.name.toLowerCase()];
+              const matchedWeapon = WEAPON_BY_NAME[p.name.toLowerCase()];
+              const pullImage = matchedChar?.image || matchedWeapon?.image || "";
+              const pullColor = matchedChar ? (ELEMENTS[matchedChar.element]?.color || C.gold) : C.gold;
               return (
-                <div key={p.id} className="relative rounded-lg overflow-hidden" style={{ border: `2px solid ${isSel ? C.gold : "transparent"}` }}>
+                <div
+                  key={p.id}
+                  className="relative rounded-lg overflow-hidden shrink-0 snap-start"
+                  style={{ width: 108, border: `2px solid ${isSel ? C.gold : "transparent"}` }}
+                >
                   <button onClick={() => setSelectedPullKey(p.id)} className="block w-full text-left">
-                    <Portrait name={p.name} rarity={5} color={C.gold} size="w-full aspect-square" />
+                    <Portrait name={p.name} image={pullImage} rarity={5} color={pullColor} size="w-full aspect-square" />
                   </button>
                   <span className="absolute top-1 right-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: badgeColor, color: C.void }}>
                     {p.pityAtPull}
