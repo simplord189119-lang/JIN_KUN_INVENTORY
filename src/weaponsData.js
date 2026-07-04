@@ -33,7 +33,7 @@ export const WEAPONS = [
   { id: 'sig_aemeath', name: 'Everbright Polestar', type: 'Sword', rarity: 5, image: '/images/weapons/everbright_polestar.jpg' }, // Aemeath
   { id: 'sig_changli', name: 'Blazing Brilliance', type: 'Sword', rarity: 5, image: '/images/weapons/blazing_brilliance.jpg' }, // Changli
   { id: 'sig_denia', name: 'Forged Dwarf Star', type: 'Rectifier', rarity: 5, image: '/images/weapons/forged_dwarf_star.jpg' }, // Denia
-  { id: 'sig_galbrena', name: 'Lux & Umbra', type: 'Pistols', rarity: 5, image: '/images/weapons/lux&umbra.jpg' }, // Galbrena — rename the GitHub file from "lux&umbra,.jpg" to "luxumbra.jpg"
+  { id: 'sig_galbrena', name: 'Lux & Umbra', type: 'Pistols', rarity: 5, image: '/images/weapons/lux_&_umbra.jpg' }, // Galbrena 
   { id: 'sig_mornye', name: 'Starfield Calibrator', type: 'Broadblade', rarity: 5, image: '/images/weapons/starfieldcalibrator.jpg' }, // Mornye
 
   // Havoc
