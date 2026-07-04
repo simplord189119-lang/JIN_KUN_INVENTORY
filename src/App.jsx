@@ -2195,4 +2195,15 @@ function AuthModal({ mode, setMode, username, setUsername, password, setPassword
 
           <button
             onClick={onSubmit}
-        
+            disabled={busy}
+            className="w-full flex items-center justify-center gap-1.5 py-2.5 jk-notch-sm text-sm font-bold disabled:opacity-60"
+            style={{ background: C.gold, color: C.void }}
+          >
+            {busy ? <Loader2 size={15} className="animate-spin" /> : mode === "login" ? <LogIn size={15} /> : <UserPlus size={15} />}
+            {mode === "login" ? "Sign In" : "Create Account"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
