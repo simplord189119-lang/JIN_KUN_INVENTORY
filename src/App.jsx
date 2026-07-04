@@ -16,7 +16,6 @@ import { auth, db } from "./firebase.js";
 import { CHARACTERS } from "./data.js";
 import { WEAPONS } from "./weaponsData.js";
 import { BUILD_DATA } from "./buildData.js";
-import { WEAPON_INFO } from "./weaponsinfo.js";
 
 /* ============================================================================
    BUILD LOOKUPS — DetailModal looks characters/weapons up by lowercased
@@ -37,23 +36,10 @@ const CHARACTER_BUILDS_BY_NAME = Object.fromEntries(
 );
 
 /* Weapon-specific build info (crit/buff text, which character it belongs
-   to) lives in weaponsinfo.js, keyed by the same `id` used in
-   weaponsData.js — mirror of the CHARACTER_BUILDS_BY_NAME derivation above,
-   just for weapons. Entries with no matching WEAPON_INFO row (or a blank
-   `buff`/`ownerName`) fall through to DetailModal's existing "Not added
-   yet" placeholders, so nothing crashes for weapons we haven't filled in. */
-const WEAPON_INFO_BY_NAME = Object.fromEntries(
-  WEAPONS
-    .map((w) => {
-      const info = WEAPON_INFO.find((x) => x.id === w.id);
-      if (!info) return null;
-      return [
-        w.name.toLowerCase(),
-        { buff: info.buff || "", ownerName: info.ownerName || "" },
-      ];
-    })
-    .filter(Boolean)
-);
+   to) isn't in buildData.js yet — BUILD_DATA only covers characters. Left
+   empty so DetailModal's existing "Not added yet" fallback handles weapons
+   until that data is added; nothing crashes in the meantime. */
+const WEAPON_INFO_BY_NAME = {};
 
 /* Pulls in history only store a name string — these let the Tracker tab
    resolve a pull's element/weapon-type/rarity for rendering a Portrait. */
@@ -2171,8 +2157,10 @@ function AstriteCalculatorTab(props) {
                     min={0}
                     value={s.amount}
                     onChange={(e) => updateAstriteSource(s.id, { amount: Math.max(0, Number(e.target.value) || 0) })}
-                    className="w-20 px-2 py-1.5 rounded text-xs                    style={{ background: C.panel, border: `1px solid ${C.border}`, color: C.ivory }}
-                  /><span className="text-[10px]" style={{ color: C.ivoryDim }}>Astrite / {s.kind === "onetime" ? "reward" : s.kind === "daily" ? "day" : "week"}</span>
+                    className="w-20 px-2 py-1.5 rounded text-xs outline-none"
+                    style={{ background: C.panel, border: `1px solid ${C.border}`, color: C.ivory }}
+                  />
+                  <span className="text-[10px]" style={{ color: C.ivoryDim }}>Astrite / {s.kind === "onetime" ? "reward" : s.kind === "daily" ? "day" : "week"}</span>
 
                   {s.kind !== "onetime" && (
                     <input
@@ -2417,4 +2405,5 @@ function AuthModal({ mode, setMode, username, setUsername, password, setPassword
         </div>
       </div>
     </div>
-  }
+  );
+}
