@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import {
   Sparkles, User, Upload, Link2, Star, Star as StarIcon, Crown, Circle,
   Check, X, Menu, LayoutDashboard, Users, Package, History, BarChart3,
@@ -139,7 +138,7 @@ const TABS = [
   { id: "resonators", label: "Resonators", icon: Users },
   { id: "weapons", label: "Weapons", icon: Package },
   { id: "convene", label: "Tracker", icon: History },
-  { id: "analytics", label: "Analytics", icon: BarChart3 },
+  { id: "analytics", label: "Astrite Calc", icon: BarChart3 },
 ];
 
 /* ============================================================================
@@ -346,6 +345,43 @@ function dupeSequenceAt(fiveStarsChrono, index) {
     if (fiveStarsChrono[i].name === target.name) count++;
   }
   return count - 1; // S0 = first copy, S1 = first dupe, etc.
+}
+
+/* ============================================================================
+   ASTRITE CALCULATOR HELPERS — all real date math against the live clock,
+   so the person never multiplies "days remaining × daily amount" by hand.
+============================================================================ */
+function daysRemainingUntil(dateStr) {
+  if (!dateStr) return 0;
+  const end = new Date(dateStr);
+  if (isNaN(end.getTime())) return 0;
+  end.setHours(23, 59, 59, 999);
+  const ms = end.getTime() - Date.now();
+  return Math.max(0, Math.ceil(ms / 86400000));
+}
+
+/* A source's own end date wins; otherwise it inherits the nearest banner
+   countdown already set in the Tracker tab (bannerMeta) — so setting a
+   banner's end date once feeds both tabs automatically. */
+function sourceHorizon(src, globalHorizonISO) {
+  return src.endsAt || globalHorizonISO || null;
+}
+
+function computeSourceTotal(src, globalHorizonISO) {
+  if (src.kind === "onetime") {
+    return src.claimed ? 0 : Math.max(0, src.amount || 0);
+  }
+  const remainingDays = daysRemainingUntil(sourceHorizon(src, globalHorizonISO));
+  if (src.kind === "daily") {
+    const usableDays = Math.max(0, remainingDays - (src.claimedToday ? 1 : 0));
+    return usableDays * (src.amount || 0);
+  }
+  if (src.kind === "weekly") {
+    const remainingWeeks = Math.floor(remainingDays / 7);
+    const usableWeeks = Math.max(0, remainingWeeks - (src.claimedThisWeek ? 1 : 0));
+    return usableWeeks * (src.amount || 0);
+  }
+  return 0;
 }
 
 /* Resize + compress an uploaded image client-side so it fits comfortably
@@ -600,6 +636,11 @@ export default function App() {
   const [bannerMeta, setBannerMeta] = useState({}); // { [bannerId]: { featuredName, endsAt } }
   const [importOpen, setImportOpen] = useState(false);
 
+  // --- astrite calculator ---
+  const [calcBanner, setCalcBanner] = useState("char_event"); // which banner's pity to auto-pull
+  const [ownedAstrite, setOwnedAstrite] = useState(0); // manual — the app can't read your real balance
+  const [astriteSources, setAstriteSources] = useState([]); // [{id,name,kind,amount,endsAt,claimedToday,claimedThisWeek,claimed}]
+
   const saveTimer = useRef(null);
   const skipNextSave = useRef(false);
 
@@ -642,6 +683,8 @@ export default function App() {
         pullHistory: [],
         wallpaper: null,
         bannerMeta: {},
+        ownedAstrite: 0,
+        astriteSources: [],
       });
       skipNextSave.current = true;
       setCharacterPriorities({});
@@ -649,6 +692,8 @@ export default function App() {
       setPullHistory([]);
       setWallpaperUrl(null);
       setBannerMeta({});
+      setOwnedAstrite(0);
+      setAstriteSources([]);
       setUsername(uname);
       setUid(cred.user.uid);
       setAuthOpen(false);
@@ -670,13 +715,15 @@ export default function App() {
     try {
       const cred = await signInWithEmailAndPassword(auth, usernameToEmail(uname), authPassword);
       const snap = await getDoc(doc(db, "users", cred.user.uid));
-      const data = snap.exists() ? snap.data() : { characterPriorities: {}, weaponPriorities: {}, pullHistory: [], wallpaper: null, bannerMeta: {} };
+      const data = snap.exists() ? snap.data() : { characterPriorities: {}, weaponPriorities: {}, pullHistory: [], wallpaper: null, bannerMeta: {}, ownedAstrite: 0, astriteSources: [] };
       skipNextSave.current = true;
       setCharacterPriorities(data.characterPriorities || {});
       setWeaponPriorities(data.weaponPriorities || {});
       setPullHistory(data.pullHistory || []);
       setWallpaperUrl(data.wallpaper || null);
       setBannerMeta(data.bannerMeta || {});
+      setOwnedAstrite(data.ownedAstrite || 0);
+      setAstriteSources(data.astriteSources || []);
       setUsername(data.username || uname);
       setUid(cred.user.uid);
       setAuthOpen(false);
@@ -706,6 +753,8 @@ export default function App() {
     setPullHistory([]);
     setWallpaperUrl(null);
     setBannerMeta({});
+    setOwnedAstrite(0);
+    setAstriteSources([]);
     notify("Signed out. Switched to guest mode (not saved).");
   }
 
@@ -715,13 +764,15 @@ export default function App() {
       if (user) {
         try {
           const snap = await getDoc(doc(db, "users", user.uid));
-          const data = snap.exists() ? snap.data() : { characterPriorities: {}, weaponPriorities: {}, pullHistory: [], wallpaper: null, bannerMeta: {} };
+          const data = snap.exists() ? snap.data() : { characterPriorities: {}, weaponPriorities: {}, pullHistory: [], wallpaper: null, bannerMeta: {}, ownedAstrite: 0, astriteSources: [] };
           skipNextSave.current = true;
           setCharacterPriorities(data.characterPriorities || {});
           setWeaponPriorities(data.weaponPriorities || {});
           setPullHistory(data.pullHistory || []);
           setWallpaperUrl(data.wallpaper || null);
           setBannerMeta(data.bannerMeta || {});
+          setOwnedAstrite(data.ownedAstrite || 0);
+          setAstriteSources(data.astriteSources || []);
           setUsername(data.username || null);
           setUid(user.uid);
         } catch {
@@ -741,14 +792,14 @@ export default function App() {
     clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
       try {
-        await setDoc(doc(db, "users", uid), { characterPriorities, weaponPriorities, pullHistory, bannerMeta }, { merge: true });
+        await setDoc(doc(db, "users", uid), { characterPriorities, weaponPriorities, pullHistory, bannerMeta, ownedAstrite, astriteSources }, { merge: true });
       } catch {
         notify("Cloud sync failed — will retry on next change.", "error");
       }
     }, 900);
     return () => clearTimeout(saveTimer.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [characterPriorities, weaponPriorities, pullHistory, bannerMeta, uid]);
+  }, [characterPriorities, weaponPriorities, pullHistory, bannerMeta, ownedAstrite, astriteSources, uid]);
 
   /* ---------------------------------------------------------------------
      WALLPAPER — compressed hard enough to comfortably fit inside a
@@ -919,6 +970,53 @@ export default function App() {
     return out;
   }, [pullHistory, pityByBanner]);
 
+  // Nearest banner end-date already set in the Tracker tab — reused here so
+  // Astrite sources don't need their own end date typed in a second time.
+  const globalHorizon = useMemo(() => {
+    const dates = BANNERS.map(b => bannerMeta[b.id]?.endsAt).filter(Boolean);
+    if (!dates.length) return null;
+    return dates.reduce((min, d) => (new Date(d) < new Date(min) ? d : min), dates[0]);
+  }, [bannerMeta]);
+
+  // Real, automatic Astrite math — no manual multiplication anywhere here.
+  const astriteCalc = useMemo(() => {
+    const pity = pityByBanner[calcBanner] || 0;
+    const pullsToHardPity = Math.max(0, HARD_PITY - pity);
+    const astriteNeeded = pullsToHardPity * ASTRITE_PER_PULL;
+    const shortfall = Math.max(0, astriteNeeded - ownedAstrite);
+    const ownedPulls = Math.floor(ownedAstrite / ASTRITE_PER_PULL);
+
+    const todayTotal = astriteSources
+      .filter(s => s.kind === "daily" && !s.claimedToday)
+      .reduce((sum, s) => sum + (s.amount || 0), 0);
+
+    const bySource = astriteSources.map(s => ({
+      ...s,
+      remainingDays: s.kind !== "onetime" ? daysRemainingUntil(sourceHorizon(s, globalHorizon)) : null,
+      total: computeSourceTotal(s, globalHorizon),
+    }));
+    const claimableTotal = bySource.reduce((sum, s) => sum + s.total, 0);
+
+    return {
+      pity, pullsToHardPity, astriteNeeded, shortfall, ownedPulls,
+      todayTotal, todayPulls: Math.floor(todayTotal / ASTRITE_PER_PULL),
+      bySource, claimableTotal, claimablePulls: Math.floor(claimableTotal / ASTRITE_PER_PULL),
+    };
+  }, [pityByBanner, calcBanner, ownedAstrite, astriteSources, globalHorizon]);
+
+  function addAstriteSource() {
+    setAstriteSources(prev => [
+      ...prev,
+      { id: `src-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, name: "New source", kind: "daily", amount: 60, endsAt: "", claimedToday: false, claimedThisWeek: false, claimed: false },
+    ]);
+  }
+  function updateAstriteSource(id, patch) {
+    setAstriteSources(prev => prev.map(s => (s.id === id ? { ...s, ...patch } : s)));
+  }
+  function removeAstriteSource(id) {
+    setAstriteSources(prev => prev.filter(s => s.id !== id));
+  }
+
   const priorityChars = useMemo(
     () => CHARACTERS.filter(c => characterPriorities[c.id] === dashPriorityTier),
     [characterPriorities, dashPriorityTier]
@@ -943,18 +1041,6 @@ export default function App() {
     ),
     [weaponSearch, weaponTypeFilter]
   );
-
-  const fiftyFiftyPulls = useMemo(
-    () => pullHistory.filter(p => p.banner === "char_event" && p.rarity === 5),
-    [pullHistory]
-  );
-  const fiftyFiftyMarked = fiftyFiftyPulls.filter(p => p.won50 === true || p.won50 === false);
-  const wins50 = fiftyFiftyMarked.filter(p => p.won50 === true).length;
-  const losses50 = fiftyFiftyMarked.filter(p => p.won50 === false).length;
-  const pieData = [
-    { name: "Won 50/50", value: wins50 },
-    { name: "Lost 50/50", value: losses50 },
-  ];
 
   /* ---------------------------------------------------------------------
      RENDER
@@ -1095,11 +1181,15 @@ export default function App() {
         )}
 
         {activeTab === "analytics" && (
-          <AnalyticsTab
-            pityByBanner={pityByBanner}
-            pieData={pieData}
-            fiftyFiftyPulls={fiftyFiftyPulls}
-            markFiftyFifty={markFiftyFifty}
+          <AstriteCalculatorTab
+            calcBanner={calcBanner} setCalcBanner={setCalcBanner}
+            ownedAstrite={ownedAstrite} setOwnedAstrite={setOwnedAstrite}
+            astriteSources={astriteSources}
+            addAstriteSource={addAstriteSource}
+            updateAstriteSource={updateAstriteSource}
+            removeAstriteSource={removeAstriteSource}
+            astriteCalc={astriteCalc}
+            globalHorizon={globalHorizon}
           />
         )}
       </main>
@@ -1201,7 +1291,6 @@ function PullPrioritiesTab({ priorityChars, priorityWeapons, dashPriorityTier, s
   const activeTierMeta = TIERS.find(t => t.id === dashPriorityTier);
   const [detailItem, setDetailItem] = useState(null);
   const [detailKind, setDetailKind] = useState("character");
-  const [prioritySection, setPrioritySection] = useState("character"); // "character" | "weapon"
 
   return (
     <div className="space-y-4">
@@ -1234,34 +1323,12 @@ function PullPrioritiesTab({ priorityChars, priorityWeapons, dashPriorityTier, s
         <p className="text-[11px] mt-2" style={{ color: C.ivoryDim }}>Tap a card for full details.</p>
       </div>
 
-      {/* Characters / Weapons section switch — same split as the bottom nav */}
-      <div className="flex gap-1.5">
-        <button
-          onClick={() => setPrioritySection("character")}
-          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wide"
-          style={{
-            background: prioritySection === "character" ? C.gold : C.panel2,
-            color: prioritySection === "character" ? C.void : C.ivoryDim,
-            border: `1px solid ${prioritySection === "character" ? C.gold : C.border}`,
-          }}
-        >
-          <Users size={14} /> Characters ({priorityChars.length})
-        </button>
-        <button
-          onClick={() => setPrioritySection("weapon")}
-          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wide"
-          style={{
-            background: prioritySection === "weapon" ? C.gold : C.panel2,
-            color: prioritySection === "weapon" ? C.void : C.ivoryDim,
-            border: `1px solid ${prioritySection === "weapon" ? C.gold : C.border}`,
-          }}
-        >
-          <Package size={14} /> Weapons ({priorityWeapons.length})
-        </button>
-      </div>
-
-      {prioritySection === "character" ? (
-        priorityChars.length === 0 ? (
+      {/* Characters — always shown, no toggle needed */}
+      <div>
+        <h2 className="text-xs font-bold mb-2 flex items-center gap-1.5 uppercase tracking-wide" style={{ color: C.starlight }}>
+          <Users size={13} /> Characters ({priorityChars.length})
+        </h2>
+        {priorityChars.length === 0 ? (
           <p className="text-sm italic" style={{ color: C.ivoryDim }}>No characters flagged as "{activeTierMeta.label}" yet.</p>
         ) : (
           <div className="grid grid-cols-2 gap-3">
@@ -1284,9 +1351,15 @@ function PullPrioritiesTab({ priorityChars, priorityWeapons, dashPriorityTier, s
               </div>
             ))}
           </div>
-        )
-      ) : (
-        priorityWeapons.length === 0 ? (
+        )}
+      </div>
+
+      {/* Weapons — always shown, its own separate section below Characters */}
+      <div>
+        <h2 className="text-xs font-bold mb-2 flex items-center gap-1.5 uppercase tracking-wide" style={{ color: C.starlight }}>
+          <Package size={13} /> Weapons ({priorityWeapons.length})
+        </h2>
+        {priorityWeapons.length === 0 ? (
           <p className="text-sm italic" style={{ color: C.ivoryDim }}>No weapons flagged as "{activeTierMeta.label}" yet.</p>
         ) : (
           <div className="grid grid-cols-2 gap-3">
@@ -1306,8 +1379,8 @@ function PullPrioritiesTab({ priorityChars, priorityWeapons, dashPriorityTier, s
               </div>
             ))}
           </div>
-        )
-      )}
+        )}
+      </div>
 
       {detailItem && <DetailModal kind={detailKind} item={detailItem} onClose={() => setDetailItem(null)} />}
     </div>
@@ -1935,77 +2008,203 @@ function TrackerTab(props) {
 }
 
 /* ============================================================================
-   ANALYTICS TAB
+   ASTRITE CALCULATOR TAB
+   Two real, automatic calculators — no manual arithmetic required anywhere:
+   1. Pity → Astrite needed: pity is auto-pulled from the Tracker tab's live
+      pity count for the chosen banner; only the Astrite you actually own is
+      manual input (the app has no way to read your real in-game balance).
+   2. Claimable Astrite: add your income sources once (daily/weekly/one-time
+      + when they end); the app does all day/week counting against the real
+      clock — including reusing the banner countdown you already set in the
+      Tracker tab as a shared deadline, so you don't enter it twice.
 ============================================================================ */
-const PIE_COLORS = [C.five, C.rose];
+function AstriteCalculatorTab(props) {
+  const {
+    calcBanner, setCalcBanner,
+    ownedAstrite, setOwnedAstrite,
+    astriteSources, addAstriteSource, updateAstriteSource, removeAstriteSource,
+    astriteCalc, globalHorizon,
+  } = props;
 
-function AnalyticsTab({ pityByBanner, pieData, fiftyFiftyPulls, markFiftyFifty }) {
-  const total = pieData.reduce((s, d) => s + d.value, 0);
+  const banner = BANNERS.find(b => b.id === calcBanner);
+
   return (
     <div className="space-y-4">
-      <h1 className="text-lg font-bold">Analytics</h1>
+      <h1 className="text-lg font-bold flex items-center gap-2">
+        <Sparkles size={18} color={C.gold} /> Astrite Calculator
+      </h1>
 
-      <div className="grid grid-cols-2 gap-3">
-        {BANNERS.map(b => (
-          <div key={b.id} className="rounded-xl p-4" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
-            <RadialPity label={b.short} pity={pityByBanner[b.id] || 0} />
+      {/* ---------- Pity → Astrite needed ---------- */}
+      <div className="jk-notch p-4 space-y-3" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
+        <h2 className="text-sm font-bold" style={{ color: C.starlight }}>Astrite to Guaranteed 5★</h2>
+
+        <div>
+          <label className="text-[11px] font-semibold" style={{ color: C.ivoryDim }}>Banner (pity auto-filled from Tracker)</label>
+          <select
+            value={calcBanner}
+            onChange={(e) => setCalcBanner(e.target.value)}
+            className="w-full mt-1 px-3 py-2 rounded-lg text-sm outline-none"
+            style={{ background: C.panel2, border: `1px solid ${C.border}`, color: C.ivory }}
+          >
+            {BANNERS.map(b => <option key={b.id} value={b.id}>{b.label}</option>)}
+          </select>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="jk-notch-sm p-3 text-center" style={{ background: C.panel2, border: `1px solid ${C.border}` }}>
+            <div className="text-[10px] font-semibold" style={{ color: C.ivoryDim }}>CURRENT PITY (AUTO)</div>
+            <div className="text-lg font-bold mt-1" style={{ color: C.starlight }}>{astriteCalc.pity}/{HARD_PITY}</div>
           </div>
-        ))}
+          <div>
+            <label className="text-[11px] font-semibold" style={{ color: C.ivoryDim }}>Astrite you currently own</label>
+            <input
+              type="number"
+              min={0}
+              value={ownedAstrite}
+              onChange={(e) => setOwnedAstrite(Math.max(0, Number(e.target.value) || 0))}
+              className="w-full mt-1 px-3 py-2 rounded-lg text-sm outline-none"
+              style={{ background: C.panel2, border: `1px solid ${C.border}`, color: C.ivory }}
+            />
+          </div>
+        </div>
+
+        <div className="pt-2 space-y-1.5" style={{ borderTop: `1px solid ${C.borderSoft}` }}>
+          <div className="flex items-center justify-between text-sm">
+            <span style={{ color: C.ivoryDim }}>Pulls to hard pity on {banner.label}</span>
+            <span className="font-bold">{astriteCalc.pullsToHardPity}</span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span style={{ color: C.ivoryDim }}>Astrite needed</span>
+            <span className="font-bold" style={{ color: C.gold }}>
+              {astriteCalc.astriteNeeded.toLocaleString()} <span className="font-normal text-xs" style={{ color: C.ivoryDim }}>({astriteCalc.pullsToHardPity} pulls)</span>
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span style={{ color: C.ivoryDim }}>You own</span>
+            <span className="font-semibold">
+              {ownedAstrite.toLocaleString()} <span className="font-normal text-xs" style={{ color: C.ivoryDim }}>({astriteCalc.ownedPulls} pulls)</span>
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-sm pt-1">
+            <span className="font-bold">{astriteCalc.shortfall > 0 ? "Still need" : "Surplus"}</span>
+            <span className="font-bold" style={{ color: astriteCalc.shortfall > 0 ? C.rose : C.five }}>
+              {astriteCalc.shortfall > 0
+                ? <>{astriteCalc.shortfall.toLocaleString()} <span className="font-normal text-xs" style={{ color: C.ivoryDim }}>({Math.ceil(astriteCalc.shortfall / ASTRITE_PER_PULL)} pulls)</span></>
+                : <>{(ownedAstrite - astriteCalc.astriteNeeded).toLocaleString()} <span className="font-normal text-xs" style={{ color: C.ivoryDim }}>({Math.floor((ownedAstrite - astriteCalc.astriteNeeded) / ASTRITE_PER_PULL)} pulls spare)</span></>
+              }
+            </span>
+          </div>
+        </div>
       </div>
 
-      <div className="rounded-xl p-4" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
-        <h2 className="text-sm font-bold" style={{ color: C.starlight }}>50/50 RECORD</h2>
-        <p className="text-xs mb-3" style={{ color: C.ivoryDim }}>Character Event banner only. Detected automatically (limited = win, standard = loss) — manual buttons only appear for names not yet recognized.</p>
+      {/* ---------- Claimable Astrite from sources/events ---------- */}
+      <div className="jk-notch p-4 space-y-3" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-bold" style={{ color: C.starlight }}>Claimable Astrite</h2>
+          <button onClick={addAstriteSource} className="flex items-center gap-1 text-xs font-semibold" style={{ color: C.gold }}>
+            <Plus size={13} /> Add source
+          </button>
+        </div>
+        <p className="text-[11px]" style={{ color: C.ivoryDim }}>
+          Add each income source once — the app counts the real days/weeks left automatically.
+          {globalHorizon ? ` Sources with no end date of their own use your nearest Tracker banner countdown (${fmtDate(globalHorizon)}).` : " Set an end date per source, or set a banner countdown in the Tracker tab to share one automatically."}
+        </p>
 
-        {total === 0 ? (
-          <div className="flex flex-col items-center py-6">
-            <div className="rounded-full" style={{ width: 160, height: 160, border: `18px solid ${C.borderSoft}` }} />
-            <p className="text-sm italic mt-3" style={{ color: C.ivoryDim }}>No marked 5★ pulls yet</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="jk-notch-sm p-3 text-center" style={{ background: C.panel2, border: `1px solid ${C.border}` }}>
+            <div className="text-[10px] font-semibold" style={{ color: C.ivoryDim }}>TODAY</div>
+            <div className="text-lg font-bold mt-1">
+              {astriteCalc.todayTotal.toLocaleString()} <span className="text-xs font-normal" style={{ color: C.ivoryDim }}>({astriteCalc.todayPulls})</span>
+            </div>
           </div>
+          <div className="jk-notch-sm p-3 text-center" style={{ background: `${C.gold}14`, border: `1px solid ${C.gold}55` }}>
+            <div className="text-[10px] font-semibold" style={{ color: C.gold }}>TOTAL CLAIMABLE</div>
+            <div className="text-lg font-bold mt-1" style={{ color: C.gold }}>
+              {astriteCalc.claimableTotal.toLocaleString()} <span className="text-xs font-normal" style={{ color: C.ivoryDim }}>({astriteCalc.claimablePulls} pulls)</span>
+            </div>
+          </div>
+        </div>
+
+        {astriteSources.length === 0 ? (
+          <p className="text-sm italic" style={{ color: C.ivoryDim }}>No sources yet — add dailies, weekly challenges, or one-time event rewards.</p>
         ) : (
-          <div style={{ width: "100%", height: 220 }}>
-            <ResponsiveContainer>
-              <PieChart>
-                <Pie data={pieData} dataKey="value" nameKey="name" innerRadius={55} outerRadius={80} paddingAngle={2}>
-                  {pieData.map((entry, i) => <Cell key={i} fill={PIE_COLORS[i]} stroke={C.panel} />)}
-                </Pie>
-                <Tooltip contentStyle={{ background: C.panel2, border: `1px solid ${C.border}`, color: C.ivory }} />
-                <Legend wrapperStyle={{ fontSize: 12, color: C.ivoryDim }} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        )}
+          <div className="space-y-2">
+            {astriteCalc.bySource.map(s => (
+              <div key={s.id} className="jk-notch-sm p-3" style={{ background: C.panel2, border: `1px solid ${C.border}` }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <input
+                    value={s.name}
+                    onChange={(e) => updateAstriteSource(s.id, { name: e.target.value })}
+                    className="flex-1 bg-transparent text-sm font-semibold outline-none border-b border-dashed pb-0.5"
+                    style={{ borderColor: C.borderSoft, color: C.ivory }}
+                  />
+                  <button onClick={() => removeAstriteSource(s.id)}><Trash2 size={13} color={C.rose} /></button>
+                </div>
 
-        {fiftyFiftyPulls.length > 0 && (
-          <div className="mt-3 space-y-1.5 max-h-56 overflow-y-auto pr-1">
-            {fiftyFiftyPulls.map(p => (
-              <div key={p.id} className="flex items-center justify-between text-xs py-1.5 px-2 rounded" style={{ background: C.panel2 }}>
-                <span className="truncate">{p.name} <span style={{ color: C.ivoryDim }}>· {fmtDate(p.time)}</span></span>
-                {p.won50 === true || p.won50 === false ? (
-                  <span
-                    className="px-2 py-0.5 rounded text-[10px] font-bold shrink-0"
-                    style={{ background: p.won50 ? `${C.five}CC` : `${C.rose}CC`, color: C.void }}
+                <div className="flex flex-wrap gap-2 items-center">
+                  <select
+                    value={s.kind}
+                    onChange={(e) => updateAstriteSource(s.id, { kind: e.target.value })}
+                    className="px-2 py-1.5 rounded text-xs outline-none"
+                    style={{ background: C.panel, border: `1px solid ${C.border}`, color: C.ivory }}
                   >
-                    {p.won50 ? "Won" : "Lost"}
-                  </span>
-                ) : (
-                  <div className="flex gap-1 shrink-0">
-                    <button
-                      onClick={() => markFiftyFifty(p.id, true)}
-                      className="px-2 py-0.5 rounded text-[10px] font-semibold"
-                      style={{ border: `1px solid ${C.five}66`, color: C.five }}
-                    >
-                      Won
-                    </button>
-                    <button
-                      onClick={() => markFiftyFifty(p.id, false)}
-                      className="px-2 py-0.5 rounded text-[10px] font-semibold"
-                      style={{ border: `1px solid ${C.rose}66`, color: C.rose }}
-                    >
-                      Lost
-                    </button>
-                  </div>
-                )}
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="onetime">One-time</option>
+                  </select>
+                  <input
+                    type="number"
+                    min={0}
+                    value={s.amount}
+                    onChange={(e) => updateAstriteSource(s.id, { amount: Math.max(0, Number(e.target.value) || 0) })}
+                    className="w-20 px-2 py-1.5 rounded text-xs outline-none"
+                    style={{ background: C.panel, border: `1px solid ${C.border}`, color: C.ivory }}
+                  />
+                  <span className="text-[10px]" style={{ color: C.ivoryDim }}>Astrite / {s.kind === "onetime" ? "reward" : s.kind === "daily" ? "day" : "week"}</span>
+
+                  {s.kind !== "onetime" && (
+                    <input
+                      type="date"
+                      value={s.endsAt || ""}
+                      onChange={(e) => updateAstriteSource(s.id, { endsAt: e.target.value })}
+                      placeholder="uses banner countdown"
+                      className="px-2 py-1.5 rounded text-xs outline-none"
+                      style={{ background: C.panel, border: `1px solid ${C.border}`, color: C.ivoryDim }}
+                    />
+                  )}
+
+                  {s.kind === "daily" && (
+                    <label className="flex items-center gap-1 text-[11px]" style={{ color: C.ivoryDim }}>
+                      <input type="checkbox" checked={!!s.claimedToday} onChange={(e) => updateAstriteSource(s.id, { claimedToday: e.target.checked })} />
+                      Claimed today
+                    </label>
+                  )}
+                  {s.kind === "weekly" && (
+                    <label className="flex items-center gap-1 text-[11px]" style={{ color: C.ivoryDim }}>
+                      <input type="checkbox" checked={!!s.claimedThisWeek} onChange={(e) => updateAstriteSource(s.id, { claimedThisWeek: e.target.checked })} />
+                      Claimed this week
+                    </label>
+                  )}
+                  {s.kind === "onetime" && (
+                    <label className="flex items-center gap-1 text-[11px]" style={{ color: C.ivoryDim }}>
+                      <input type="checkbox" checked={!!s.claimed} onChange={(e) => updateAstriteSource(s.id, { claimed: e.target.checked })} />
+                      Already claimed
+                    </label>
+                  )}
+                </div>
+
+                <div className="text-[11px] mt-2" style={{ color: C.ivoryDim }}>
+                  {s.kind === "onetime" ? (
+                    <>Contributes <span style={{ color: C.gold }}>{s.total.toLocaleString()}</span> {s.claimed && "(claimed — counted as 0)"}</>
+                  ) : (
+                    <>
+                      {s.remainingDays} day{s.remainingDays === 1 ? "" : "s"} left
+                      {s.kind === "weekly" && ` (${Math.floor(s.remainingDays / 7)} reset${Math.floor(s.remainingDays / 7) === 1 ? "" : "s"})`}
+                      {" → "}
+                      <span style={{ color: C.gold }}>{s.total.toLocaleString()}</span> Astrite ({Math.floor(s.total / ASTRITE_PER_PULL)} pulls)
+                    </>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -2014,6 +2213,7 @@ function AnalyticsTab({ pityByBanner, pieData, fiftyFiftyPulls, markFiftyFifty }
     </div>
   );
 }
+
 
 /* ============================================================================
    SIDEBAR DRAWER — appearance (wallpaper) + account
