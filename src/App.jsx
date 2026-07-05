@@ -1419,25 +1419,68 @@ function PullPrioritiesTab({ priorityChars, priorityWeapons, dashPriorityTier, s
    resonator you've marked as owned from the Resonators page. Tapping the
    check icon here un-marks them, mirroring the toggle on the roster card.
 ============================================================================ */
+/* ============================================================================
+   OWNED CHARACTERS TAB — a real portrait grid (not text cards) of every
+   resonator you've marked as owned from the Resonators page. Tapping the
+   check icon here un-marks them, mirroring the toggle on the roster card.
+   Split into two fixed sub-tabs (5★ / 4★, not a scroll strip) so each
+   rarity gets its own dedicated section and count.
+============================================================================ */
 function OwnedCharactersTab({ ownedCharList, onToggleOwned }) {
+  const [ownedRarityTab, setOwnedRarityTab] = useState(5);
+
+  const fiveStarOwned = ownedCharList.filter(c => c.rarity === 5);
+  const fourStarOwned = ownedCharList.filter(c => c.rarity === 4);
+  const shownList = ownedRarityTab === 5 ? fiveStarOwned : fourStarOwned;
+
   return (
     <div>
       <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
         <h1 className="text-lg font-bold flex items-center gap-2">
           <CheckCircle2 size={18} color={C.starlight} /> Owned Characters
         </h1>
-        <span className="text-xs" style={{ color: C.ivoryDim }}>{ownedCharList.length} owned</span>
+        <span className="text-xs" style={{ color: C.ivoryDim }}>{ownedCharList.length} total</span>
       </div>
 
-      {ownedCharList.length === 0 ? (
+      {/* Fixed two-way rarity switch — both sections always exist, never a scroll strip */}
+      <div className="grid grid-cols-2 gap-2 mb-4">
+        <button
+          onClick={() => setOwnedRarityTab(5)}
+          className="rounded-lg py-2 text-sm font-bold flex items-center justify-center gap-1.5"
+          style={{
+            background: ownedRarityTab === 5 ? C.five : C.panel,
+            color: ownedRarityTab === 5 ? C.void : C.ivoryDim,
+            border: `1px solid ${ownedRarityTab === 5 ? C.five : C.border}`,
+          }}
+        >
+          5★ Characters <span style={{ opacity: 0.85 }}>({fiveStarOwned.length})</span>
+        </button>
+        <button
+          onClick={() => setOwnedRarityTab(4)}
+          className="rounded-lg py-2 text-sm font-bold flex items-center justify-center gap-1.5"
+          style={{
+            background: ownedRarityTab === 4 ? C.four : C.panel,
+            color: ownedRarityTab === 4 ? C.void : C.ivoryDim,
+            border: `1px solid ${ownedRarityTab === 4 ? C.four : C.border}`,
+          }}
+        >
+          4★ Characters <span style={{ opacity: 0.85 }}>({fourStarOwned.length})</span>
+        </button>
+      </div>
+
+      {shownList.length === 0 ? (
         <div className="rounded-xl p-6 text-center" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
           <p className="text-sm" style={{ color: C.ivoryDim }}>
-            No characters marked as owned yet. Go to the <span style={{ color: C.starlight }}>Resonators</span> page and tap the check icon on a card to mark it owned.
+            {ownedCharList.length === 0 ? (
+              <>No characters marked as owned yet. Go to the <span style={{ color: C.starlight }}>Resonators</span> page and tap the check icon on a card to mark it owned.</>
+            ) : (
+              `No ${ownedRarityTab}★ characters owned yet.`
+            )}
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3">
-          {ownedCharList.map(c => (
+          {shownList.map(c => (
             <div
               key={c.id}
               className="rounded-xl p-3 relative"
