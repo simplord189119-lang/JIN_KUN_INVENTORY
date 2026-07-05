@@ -6,6 +6,13 @@ export const WEAPONS = [
   { id: 'standard_broadblade', name: 'Lustrous Razor', type: 'Broadblade', rarity: 5, image: '/images/weapons/lustrous_razor.jpg' },
   { id: 'standard_gauntlet', name: 'Abyss Surges', type: 'Gauntlets', rarity: 5, image: '' }, // TODO: upload image
 
+  // --- Standard 5-Star Weapons (Synth Armament Series, added in Version 3.0) ---
+  { id: 'standard_laser_shearer', name: 'Laser Shearer', type: 'Sword', rarity: 5, image: '' }, // TODO: upload image
+  { id: 'standard_radiance_cleaver', name: 'Radiance Cleaver', type: 'Broadblade', rarity: 5, image: '' }, // TODO: upload image
+  { id: 'standard_phasic_homogenizer', name: 'Phasic Homogenizer', type: 'Pistols', rarity: 5, image: '' }, // TODO: upload image
+  { id: 'standard_boson_astrolabe', name: 'Boson Astrolabe', type: 'Rectifier', rarity: 5, image: '' }, // TODO: upload image
+  { id: 'standard_pulsation_bracer', name: 'Pulsation Bracer', type: 'Gauntlets', rarity: 5, image: '' }, // TODO: upload image
+
   // --- Limited / Signature 5-Star Weapons ---
   // Glacio
   { id: 'sig_carlotta', name: 'The Last Dance', type: 'Pistols', rarity: 5, image: '/images/weapons/thelastdance.jpg' }, // Carlotta
