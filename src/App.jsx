@@ -606,6 +606,7 @@ export default function App() {
   const [characterPriorities, setCharacterPriorities] = useState({});
   const [weaponPriorities, setWeaponPriorities] = useState({});
   const [ownedCharacters, setOwnedCharacters] = useState({}); // { [charId]: true }
+  const [ownedWeapons, setOwnedWeapons] = useState({}); // { [weaponId]: true }
   const [pullHistory, setPullHistory] = useState([]);
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
@@ -682,6 +683,7 @@ export default function App() {
         characterPriorities: {},
         weaponPriorities: {},
         ownedCharacters: {},
+        ownedWeapons: {},
         pullHistory: [],
         wallpaper: null,
         bannerMeta: {},
@@ -692,6 +694,7 @@ export default function App() {
       setCharacterPriorities({});
       setWeaponPriorities({});
       setOwnedCharacters({});
+      setOwnedWeapons({});
       setPullHistory([]);
       setWallpaperUrl(null);
       setBannerMeta({});
@@ -718,11 +721,12 @@ export default function App() {
     try {
       const cred = await signInWithEmailAndPassword(auth, usernameToEmail(uname), authPassword);
       const snap = await getDoc(doc(db, "users", cred.user.uid));
-      const data = snap.exists() ? snap.data() : { characterPriorities: {}, weaponPriorities: {}, ownedCharacters: {}, pullHistory: [], wallpaper: null, bannerMeta: {}, ownedAstrite: 0, astriteSources: [] };
+      const data = snap.exists() ? snap.data() : { characterPriorities: {}, weaponPriorities: {}, ownedCharacters: {}, ownedWeapons: {}, pullHistory: [], wallpaper: null, bannerMeta: {}, ownedAstrite: 0, astriteSources: [] };
       skipNextSave.current = true;
       setCharacterPriorities(data.characterPriorities || {});
       setWeaponPriorities(data.weaponPriorities || {});
       setOwnedCharacters(data.ownedCharacters || {});
+      setOwnedWeapons(data.ownedWeapons || {});
       setPullHistory(data.pullHistory || []);
       setWallpaperUrl(data.wallpaper || null);
       setBannerMeta(data.bannerMeta || {});
@@ -755,6 +759,7 @@ export default function App() {
     setCharacterPriorities({});
     setWeaponPriorities({});
     setOwnedCharacters({});
+    setOwnedWeapons({});
     setPullHistory([]);
     setWallpaperUrl(null);
     setBannerMeta({});
@@ -769,11 +774,12 @@ export default function App() {
       if (user) {
         try {
           const snap = await getDoc(doc(db, "users", user.uid));
-          const data = snap.exists() ? snap.data() : { characterPriorities: {}, weaponPriorities: {}, ownedCharacters: {}, pullHistory: [], wallpaper: null, bannerMeta: {}, ownedAstrite: 0, astriteSources: [] };
+          const data = snap.exists() ? snap.data() : { characterPriorities: {}, weaponPriorities: {}, ownedCharacters: {}, ownedWeapons: {}, pullHistory: [], wallpaper: null, bannerMeta: {}, ownedAstrite: 0, astriteSources: [] };
           skipNextSave.current = true;
           setCharacterPriorities(data.characterPriorities || {});
           setWeaponPriorities(data.weaponPriorities || {});
           setOwnedCharacters(data.ownedCharacters || {});
+          setOwnedWeapons(data.ownedWeapons || {});
           setPullHistory(data.pullHistory || []);
           setWallpaperUrl(data.wallpaper || null);
           setBannerMeta(data.bannerMeta || {});
@@ -798,14 +804,14 @@ export default function App() {
     clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
       try {
-        await setDoc(doc(db, "users", uid), { characterPriorities, weaponPriorities, ownedCharacters, pullHistory, bannerMeta, ownedAstrite, astriteSources }, { merge: true });
+        await setDoc(doc(db, "users", uid), { characterPriorities, weaponPriorities, ownedCharacters, ownedWeapons, pullHistory, bannerMeta, ownedAstrite, astriteSources }, { merge: true });
       } catch {
         notify("Cloud sync failed — will retry on next change.", "error");
       }
     }, 900);
     return () => clearTimeout(saveTimer.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [characterPriorities, weaponPriorities, ownedCharacters, pullHistory, bannerMeta, ownedAstrite, astriteSources, uid]);
+  }, [characterPriorities, weaponPriorities, ownedCharacters, ownedWeapons, pullHistory, bannerMeta, ownedAstrite, astriteSources, uid]);
 
   /* ---------------------------------------------------------------------
      WALLPAPER — compressed hard enough to comfortably fit inside a
@@ -861,6 +867,13 @@ export default function App() {
   }
   function toggleOwned(id) {
     setOwnedCharacters(prev => {
+      const next = { ...prev };
+      if (next[id]) delete next[id]; else next[id] = true;
+      return next;
+    });
+  }
+  function toggleOwnedWeapon(id) {
+    setOwnedWeapons(prev => {
       const next = { ...prev };
       if (next[id]) delete next[id]; else next[id] = true;
       return next;
@@ -1042,6 +1055,10 @@ export default function App() {
     () => CHARACTERS.filter(c => ownedCharacters[c.id]),
     [ownedCharacters]
   );
+  const ownedWeaponList = useMemo(
+    () => WEAPONS.filter(w => ownedWeapons[w.id]),
+    [ownedWeapons]
+  );
 
   const filteredChars = useMemo(
     () => CHARACTERS.filter(c =>
@@ -1153,6 +1170,13 @@ export default function App() {
           />
         )}
 
+        {activeTab === "ownedWeapons" && (
+          <OwnedWeaponsTab
+            ownedWeaponList={ownedWeaponList}
+            onToggleOwned={toggleOwnedWeapon}
+          />
+        )}
+
         {activeTab === "resonators" && (
           <RosterGrid
             title="Resonator Selection"
@@ -1182,6 +1206,8 @@ export default function App() {
             kind="weapon"
             weaponFilter={weaponTypeFilter}
             setWeaponFilter={setWeaponTypeFilter}
+            owned={ownedWeapons}
+            onToggleOwned={toggleOwnedWeapon}
           />
         )}
 
@@ -1260,6 +1286,7 @@ export default function App() {
           onLogout={handleLogout}
           onOpenPriorities={() => { setActiveTab("priorities"); setSidebarOpen(false); }}
           onOpenOwned={() => { setActiveTab("owned"); setSidebarOpen(false); }}
+          onOpenOwnedWeapons={() => { setActiveTab("ownedWeapons"); setSidebarOpen(false); }}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
         />
@@ -1428,6 +1455,7 @@ function PullPrioritiesTab({ priorityChars, priorityWeapons, dashPriorityTier, s
 ============================================================================ */
 function OwnedCharactersTab({ ownedCharList, onToggleOwned }) {
   const [ownedRarityTab, setOwnedRarityTab] = useState(5);
+  const [detailItem, setDetailItem] = useState(null);
 
   const fiveStarOwned = ownedCharList.filter(c => c.rarity === 5);
   const fourStarOwned = ownedCharList.filter(c => c.rarity === 4);
@@ -1441,6 +1469,7 @@ function OwnedCharactersTab({ ownedCharList, onToggleOwned }) {
         </h1>
         <span className="text-xs" style={{ color: C.ivoryDim }}>{ownedCharList.length} total</span>
       </div>
+      <p className="text-xs mb-3" style={{ color: C.ivoryDim }}>Tap a card for signature weapon, echo, and team comp.</p>
 
       {/* Fixed two-way rarity switch — both sections always exist, never a scroll strip */}
       <div className="grid grid-cols-2 gap-2 mb-4">
@@ -1483,11 +1512,12 @@ function OwnedCharactersTab({ ownedCharList, onToggleOwned }) {
           {shownList.map(c => (
             <div
               key={c.id}
-              className="rounded-xl p-3 relative"
+              onClick={() => setDetailItem(c)}
+              className="rounded-xl p-3 relative cursor-pointer active:opacity-80"
               style={{ background: C.panel, border: `1px solid ${C.border}` }}
             >
               <button
-                onClick={() => onToggleOwned(c.id)}
+                onClick={(e) => { e.stopPropagation(); onToggleOwned(c.id); }}
                 className="absolute top-2 right-2 z-10 rounded-full p-1"
                 style={{ background: C.starlight, border: `1px solid ${C.starlight}` }}
                 title="Remove from owned"
@@ -1507,6 +1537,65 @@ function OwnedCharactersTab({ ownedCharList, onToggleOwned }) {
           ))}
         </div>
       )}
+
+      {detailItem && <DetailModal kind="character" item={detailItem} onClose={() => setDetailItem(null)} />}
+    </div>
+  );
+}
+
+/* ============================================================================
+   OWNED WEAPONS TAB — same idea as Owned Characters (real portrait grid,
+   tap to un-mark, tap card for info), but weapons don't split by rarity —
+   just one list with a total count up top.
+============================================================================ */
+function OwnedWeaponsTab({ ownedWeaponList, onToggleOwned }) {
+  const [detailItem, setDetailItem] = useState(null);
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
+        <h1 className="text-lg font-bold flex items-center gap-2">
+          <Package size={18} color={C.four} /> Owned Weapons
+        </h1>
+        <span className="text-xs" style={{ color: C.ivoryDim }}>{ownedWeaponList.length} owned</span>
+      </div>
+      <p className="text-xs mb-3" style={{ color: C.ivoryDim }}>Tap a card for info.</p>
+
+      {ownedWeaponList.length === 0 ? (
+        <div className="rounded-xl p-6 text-center" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
+          <p className="text-sm" style={{ color: C.ivoryDim }}>
+            No weapons marked as owned yet. Go to the <span style={{ color: C.starlight }}>Weapons</span> page and tap the check icon on a card to mark it owned.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          {ownedWeaponList.map(w => (
+            <div
+              key={w.id}
+              onClick={() => setDetailItem(w)}
+              className="rounded-xl p-3 relative cursor-pointer active:opacity-80"
+              style={{ background: C.panel, border: `1px solid ${C.border}` }}
+            >
+              <button
+                onClick={(e) => { e.stopPropagation(); onToggleOwned(w.id); }}
+                className="absolute top-2 right-2 z-10 rounded-full p-1"
+                style={{ background: C.starlight, border: `1px solid ${C.starlight}` }}
+                title="Remove from owned"
+              >
+                <CheckCircle2 size={14} color={C.void} />
+              </button>
+              <Portrait name={w.name} image={w.image} rarity={w.rarity} color={C.starlight} />
+              <div className="mt-2 text-sm font-semibold truncate">{w.name}</div>
+              <div className="flex items-center justify-between mt-1">
+                <WeaponBadge type={w.type} />
+                <RarityStars rarity={w.rarity} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {detailItem && <DetailModal kind="weapon" item={detailItem} onClose={() => setDetailItem(null)} />}
     </div>
   );
 }
@@ -1642,7 +1731,7 @@ function RosterGrid({ title, items, search, setSearch, priorities, setTier, kind
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [detailItem, setDetailItem] = useState(null);
   const activeFilterCount = (kind === "character" && elementFilter !== "all" ? 1 : 0) + (weaponFilter !== "all" ? 1 : 0);
-  const showOwnership = kind === "character" && typeof onToggleOwned === "function";
+  const showOwnership = (kind === "character" || kind === "weapon") && typeof onToggleOwned === "function";
 
   return (
     <div>
@@ -2375,7 +2464,7 @@ function AstriteCalculatorTab(props) {
 /* ============================================================================
    SIDEBAR DRAWER — appearance (wallpaper) + account
 ============================================================================ */
-function Sidebar({ onClose, username, wallpaperUrl, wallpaperBusy, fileInputRef, onPickWallpaper, onWallpaperFile, onRemoveWallpaper, onOpenAuth, onLogout, onOpenPriorities, onOpenOwned, activeTab, setActiveTab }) {
+function Sidebar({ onClose, username, wallpaperUrl, wallpaperBusy, fileInputRef, onPickWallpaper, onWallpaperFile, onRemoveWallpaper, onOpenAuth, onLogout, onOpenPriorities, onOpenOwned, onOpenOwnedWeapons, activeTab, setActiveTab }) {
   return (
     <div className="fixed inset-0 z-50 flex">
       <div className="w-72 max-w-[85vw] h-full p-4 overflow-y-auto jk-notch" style={{ background: C.panel, borderRight: `1px solid ${C.border}` }}>
@@ -2410,6 +2499,14 @@ function Sidebar({ onClose, username, wallpaperUrl, wallpaperBusy, fileInputRef,
           style={{ background: `${C.starlight}14`, border: `1px solid ${C.starlight}55`, color: C.starlight }}
         >
           <CheckCircle2 size={17} /> Owned Characters
+        </button>
+
+        <button
+          onClick={onOpenOwnedWeapons}
+          className="w-full flex items-center gap-2.5 px-3 py-3 jk-notch-sm text-sm font-semibold mb-2"
+          style={{ background: `${C.four}14`, border: `1px solid ${C.four}55`, color: C.four }}
+        >
+          <Package size={17} /> Owned Weapons
         </button>
 
         <button
