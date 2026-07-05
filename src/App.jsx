@@ -4,7 +4,7 @@ import {
   Check, X, Menu, LayoutDashboard, Users, Package, History, BarChart3,
   LogOut, LogIn, UserPlus, Loader2, Info, Image as ImageIcon, Eye, EyeOff,
   Trash2, Plus, Search, ListChecks, Filter, ChevronDown, ChevronUp,
-  Mail, Lock,
+  Mail, Lock, CheckCircle2,
 } from "lucide-react";
 import {
   createUserWithEmailAndPassword, signInWithEmailAndPassword,
@@ -605,6 +605,7 @@ export default function App() {
   // --- data ---
   const [characterPriorities, setCharacterPriorities] = useState({});
   const [weaponPriorities, setWeaponPriorities] = useState({});
+  const [ownedCharacters, setOwnedCharacters] = useState({}); // { [charId]: true }
   const [pullHistory, setPullHistory] = useState([]);
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
@@ -680,6 +681,7 @@ export default function App() {
         username: uname,
         characterPriorities: {},
         weaponPriorities: {},
+        ownedCharacters: {},
         pullHistory: [],
         wallpaper: null,
         bannerMeta: {},
@@ -689,6 +691,7 @@ export default function App() {
       skipNextSave.current = true;
       setCharacterPriorities({});
       setWeaponPriorities({});
+      setOwnedCharacters({});
       setPullHistory([]);
       setWallpaperUrl(null);
       setBannerMeta({});
@@ -715,10 +718,11 @@ export default function App() {
     try {
       const cred = await signInWithEmailAndPassword(auth, usernameToEmail(uname), authPassword);
       const snap = await getDoc(doc(db, "users", cred.user.uid));
-      const data = snap.exists() ? snap.data() : { characterPriorities: {}, weaponPriorities: {}, pullHistory: [], wallpaper: null, bannerMeta: {}, ownedAstrite: 0, astriteSources: [] };
+      const data = snap.exists() ? snap.data() : { characterPriorities: {}, weaponPriorities: {}, ownedCharacters: {}, pullHistory: [], wallpaper: null, bannerMeta: {}, ownedAstrite: 0, astriteSources: [] };
       skipNextSave.current = true;
       setCharacterPriorities(data.characterPriorities || {});
       setWeaponPriorities(data.weaponPriorities || {});
+      setOwnedCharacters(data.ownedCharacters || {});
       setPullHistory(data.pullHistory || []);
       setWallpaperUrl(data.wallpaper || null);
       setBannerMeta(data.bannerMeta || {});
@@ -750,6 +754,7 @@ export default function App() {
     setUid(null);
     setCharacterPriorities({});
     setWeaponPriorities({});
+    setOwnedCharacters({});
     setPullHistory([]);
     setWallpaperUrl(null);
     setBannerMeta({});
@@ -764,10 +769,11 @@ export default function App() {
       if (user) {
         try {
           const snap = await getDoc(doc(db, "users", user.uid));
-          const data = snap.exists() ? snap.data() : { characterPriorities: {}, weaponPriorities: {}, pullHistory: [], wallpaper: null, bannerMeta: {}, ownedAstrite: 0, astriteSources: [] };
+          const data = snap.exists() ? snap.data() : { characterPriorities: {}, weaponPriorities: {}, ownedCharacters: {}, pullHistory: [], wallpaper: null, bannerMeta: {}, ownedAstrite: 0, astriteSources: [] };
           skipNextSave.current = true;
           setCharacterPriorities(data.characterPriorities || {});
           setWeaponPriorities(data.weaponPriorities || {});
+          setOwnedCharacters(data.ownedCharacters || {});
           setPullHistory(data.pullHistory || []);
           setWallpaperUrl(data.wallpaper || null);
           setBannerMeta(data.bannerMeta || {});
@@ -792,14 +798,14 @@ export default function App() {
     clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
       try {
-        await setDoc(doc(db, "users", uid), { characterPriorities, weaponPriorities, pullHistory, bannerMeta, ownedAstrite, astriteSources }, { merge: true });
+        await setDoc(doc(db, "users", uid), { characterPriorities, weaponPriorities, ownedCharacters, pullHistory, bannerMeta, ownedAstrite, astriteSources }, { merge: true });
       } catch {
         notify("Cloud sync failed — will retry on next change.", "error");
       }
     }, 900);
     return () => clearTimeout(saveTimer.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [characterPriorities, weaponPriorities, pullHistory, bannerMeta, ownedAstrite, astriteSources, uid]);
+  }, [characterPriorities, weaponPriorities, ownedCharacters, pullHistory, bannerMeta, ownedAstrite, astriteSources, uid]);
 
   /* ---------------------------------------------------------------------
      WALLPAPER — compressed hard enough to comfortably fit inside a
@@ -850,6 +856,13 @@ export default function App() {
     setWeaponPriorities(prev => {
       const next = { ...prev };
       if (tier == null) delete next[id]; else next[id] = tier;
+      return next;
+    });
+  }
+  function toggleOwned(id) {
+    setOwnedCharacters(prev => {
+      const next = { ...prev };
+      if (next[id]) delete next[id]; else next[id] = true;
       return next;
     });
   }
@@ -1025,6 +1038,10 @@ export default function App() {
     () => WEAPONS.filter(w => weaponPriorities[w.id] === dashPriorityTier),
     [weaponPriorities, dashPriorityTier]
   );
+  const ownedCharList = useMemo(
+    () => CHARACTERS.filter(c => ownedCharacters[c.id]),
+    [ownedCharacters]
+  );
 
   const filteredChars = useMemo(
     () => CHARACTERS.filter(c =>
@@ -1129,6 +1146,13 @@ export default function App() {
           />
         )}
 
+        {activeTab === "owned" && (
+          <OwnedCharactersTab
+            ownedCharList={ownedCharList}
+            onToggleOwned={toggleOwned}
+          />
+        )}
+
         {activeTab === "resonators" && (
           <RosterGrid
             title="Resonator Selection"
@@ -1142,6 +1166,8 @@ export default function App() {
             setElementFilter={setCharElementFilter}
             weaponFilter={charWeaponFilter}
             setWeaponFilter={setCharWeaponFilter}
+            owned={ownedCharacters}
+            onToggleOwned={toggleOwned}
           />
         )}
 
@@ -1233,6 +1259,7 @@ export default function App() {
           onOpenAuth={(mode) => { setAuthMode(mode); setAuthOpen(true); setSidebarOpen(false); }}
           onLogout={handleLogout}
           onOpenPriorities={() => { setActiveTab("priorities"); setSidebarOpen(false); }}
+          onOpenOwned={() => { setActiveTab("owned"); setSidebarOpen(false); }}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
         />
@@ -1388,6 +1415,60 @@ function PullPrioritiesTab({ priorityChars, priorityWeapons, dashPriorityTier, s
 }
 
 /* ============================================================================
+   OWNED CHARACTERS TAB — a real portrait grid (not text cards) of every
+   resonator you've marked as owned from the Resonators page. Tapping the
+   check icon here un-marks them, mirroring the toggle on the roster card.
+============================================================================ */
+function OwnedCharactersTab({ ownedCharList, onToggleOwned }) {
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
+        <h1 className="text-lg font-bold flex items-center gap-2">
+          <CheckCircle2 size={18} color={C.starlight} /> Owned Characters
+        </h1>
+        <span className="text-xs" style={{ color: C.ivoryDim }}>{ownedCharList.length} owned</span>
+      </div>
+
+      {ownedCharList.length === 0 ? (
+        <div className="rounded-xl p-6 text-center" style={{ background: C.panel, border: `1px solid ${C.border}` }}>
+          <p className="text-sm" style={{ color: C.ivoryDim }}>
+            No characters marked as owned yet. Go to the <span style={{ color: C.starlight }}>Resonators</span> page and tap the check icon on a card to mark it owned.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          {ownedCharList.map(c => (
+            <div
+              key={c.id}
+              className="rounded-xl p-3 relative"
+              style={{ background: C.panel, border: `1px solid ${C.border}` }}
+            >
+              <button
+                onClick={() => onToggleOwned(c.id)}
+                className="absolute top-2 right-2 z-10 rounded-full p-1"
+                style={{ background: C.starlight, border: `1px solid ${C.starlight}` }}
+                title="Remove from owned"
+              >
+                <CheckCircle2 size={14} color={C.void} />
+              </button>
+              <Portrait name={c.name} image={c.image} rarity={c.rarity} color={ELEMENTS[c.element]?.color || C.starlight} />
+              <div className="mt-2 text-sm font-semibold truncate">{c.name}</div>
+              <div className="flex items-center justify-between mt-1">
+                <div className="flex items-center gap-1">
+                  <ElementBadge element={c.element} />
+                  <WeaponBadge type={c.weaponType} />
+                </div>
+                <RarityStars rarity={c.rarity} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================================================================
    CURATED BUILD INFO — imported from buildData.js (see that file for how
    to add more characters/weapons).
 ============================================================================ */
@@ -1514,16 +1595,19 @@ function FilterChipRow({ label, options, value, onChange }) {
 const ELEMENT_FILTER_OPTIONS = Object.entries(ELEMENTS).map(([name, v]) => ({ id: name, label: name, color: v.color, code: v.code }));
 const WEAPON_FILTER_OPTIONS = Object.entries(WEAPON_TYPES).map(([name, code]) => ({ id: name, label: name, color: C.starlight, code }));
 
-function RosterGrid({ title, items, search, setSearch, priorities, setTier, kind, elementFilter, setElementFilter, weaponFilter, setWeaponFilter }) {
+function RosterGrid({ title, items, search, setSearch, priorities, setTier, kind, elementFilter, setElementFilter, weaponFilter, setWeaponFilter, owned, onToggleOwned }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [detailItem, setDetailItem] = useState(null);
   const activeFilterCount = (kind === "character" && elementFilter !== "all" ? 1 : 0) + (weaponFilter !== "all" ? 1 : 0);
+  const showOwnership = kind === "character" && typeof onToggleOwned === "function";
 
   return (
     <div>
       <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
         <h1 className="text-lg font-bold">{title}</h1>
-        <span className="text-xs" style={{ color: C.ivoryDim }}>Tap a card for info · tap a tier chip to assign priority</span>
+        <span className="text-xs" style={{ color: C.ivoryDim }}>
+          Tap a card for info · tap a tier chip to assign priority{showOwnership ? " · tap the check to mark owned" : ""}
+        </span>
       </div>
 
       <div className="relative mb-3">
@@ -1563,36 +1647,66 @@ function RosterGrid({ title, items, search, setSearch, priorities, setTier, kind
       </div>
 
       <div className="grid grid-cols-2 gap-3 mt-3">
-        {items.map(item => (
-          <div
-            key={item.id}
-            onClick={() => setDetailItem(item)}
-            className="rounded-xl p-3 cursor-pointer active:opacity-80"
-            style={{ background: C.panel, border: `1px solid ${C.border}` }}
-          >
-            <Portrait
-              name={item.name}
-              image={item.image}
-              rarity={item.rarity}
-              color={kind === "character" ? (ELEMENTS[item.element]?.color || C.starlight) : C.starlight}
-            />
-            <div className="mt-2 text-sm font-semibold truncate">{item.name}</div>
-            <div className="flex items-center justify-between mt-1">
-              <div className="flex items-center gap-1">
-                {kind === "character" ? (
-                  <>
-                    <ElementBadge element={item.element} />
-                    <WeaponBadge type={item.weaponType} />
-                  </>
-                ) : (
-                  <WeaponBadge type={item.type} />
-                )}
+        {items.map(item => {
+          const isOwned = showOwnership && !!owned?.[item.id];
+          return (
+            <div
+              key={item.id}
+              onClick={() => setDetailItem(item)}
+              className="rounded-xl p-3 cursor-pointer active:opacity-80 relative"
+              style={{
+                background: C.panel,
+                border: `1px solid ${isOwned ? C.borderSoft : C.border}`,
+                opacity: isOwned ? 0.72 : 1,
+                filter: isOwned ? "grayscale(0.55)" : "none",
+                transition: "opacity .15s, filter .15s",
+              }}
+            >
+              {showOwnership && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onToggleOwned(item.id); }}
+                  className="absolute top-2 right-2 z-10 rounded-full p-1"
+                  style={{
+                    background: isOwned ? C.starlight : `${C.void}AA`,
+                    border: `1px solid ${isOwned ? C.starlight : C.border}`,
+                  }}
+                  title={isOwned ? "Remove from owned" : "Mark as owned"}
+                >
+                  <CheckCircle2 size={14} color={isOwned ? C.void : C.ivoryDim} />
+                </button>
+              )}
+              {isOwned && (
+                <span
+                  className="absolute top-2 left-2 z-10 text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide"
+                  style={{ background: `${C.void}CC`, color: C.ivoryDim, border: `1px solid ${C.borderSoft}` }}
+                >
+                  Owned
+                </span>
+              )}
+              <Portrait
+                name={item.name}
+                image={item.image}
+                rarity={item.rarity}
+                color={kind === "character" ? (ELEMENTS[item.element]?.color || C.starlight) : C.starlight}
+              />
+              <div className="mt-2 text-sm font-semibold truncate">{item.name}</div>
+              <div className="flex items-center justify-between mt-1">
+                <div className="flex items-center gap-1">
+                  {kind === "character" ? (
+                    <>
+                      <ElementBadge element={item.element} />
+                      <WeaponBadge type={item.weaponType} />
+                    </>
+                  ) : (
+                    <WeaponBadge type={item.type} />
+                  )}
+                </div>
+                <RarityStars rarity={item.rarity} />
               </div>
-              <RarityStars rarity={item.rarity} />
+              <TierPicker value={priorities[item.id]} onChange={(tier) => setTier(item.id, tier)} />
             </div>
-            <TierPicker value={priorities[item.id]} onChange={(tier) => setTier(item.id, tier)} />
-          </div>
-        ))}
+          );
+        })}
         {items.length === 0 && (
           <p className="col-span-2 text-sm italic text-center py-8" style={{ color: C.ivoryDim }}>No matches.</p>
         )}
@@ -2218,7 +2332,7 @@ function AstriteCalculatorTab(props) {
 /* ============================================================================
    SIDEBAR DRAWER — appearance (wallpaper) + account
 ============================================================================ */
-function Sidebar({ onClose, username, wallpaperUrl, wallpaperBusy, fileInputRef, onPickWallpaper, onWallpaperFile, onRemoveWallpaper, onOpenAuth, onLogout, onOpenPriorities, activeTab, setActiveTab }) {
+function Sidebar({ onClose, username, wallpaperUrl, wallpaperBusy, fileInputRef, onPickWallpaper, onWallpaperFile, onRemoveWallpaper, onOpenAuth, onLogout, onOpenPriorities, onOpenOwned, activeTab, setActiveTab }) {
   return (
     <div className="fixed inset-0 z-50 flex">
       <div className="w-72 max-w-[85vw] h-full p-4 overflow-y-auto jk-notch" style={{ background: C.panel, borderRight: `1px solid ${C.border}` }}>
@@ -2246,6 +2360,14 @@ function Sidebar({ onClose, username, wallpaperUrl, wallpaperBusy, fileInputRef,
             );
           })}
         </nav>
+
+        <button
+          onClick={onOpenOwned}
+          className="w-full flex items-center gap-2.5 px-3 py-3 jk-notch-sm text-sm font-semibold mb-2"
+          style={{ background: `${C.starlight}14`, border: `1px solid ${C.starlight}55`, color: C.starlight }}
+        >
+          <CheckCircle2 size={17} /> Owned Characters
+        </button>
 
         <button
           onClick={onOpenPriorities}
