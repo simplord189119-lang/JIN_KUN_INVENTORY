@@ -1,0 +1,30 @@
+rules_version = '2';
+// ─────────────────────────────────────────────────────────────────────────────
+// Firestore Security Rules for jin_kun inventory
+// ─────────────────────────────────────────────────────────────────────────────
+// Deploy with:   firebase deploy --only firestore:rules
+// ─────────────────────────────────────────────────────────────────────────────
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Characters collection ──────────────────────────────────────────────
+    // Anyone (including unauthenticated) can READ the shared character list.
+    // Only signed-in users can write.  If you want an admin-only write,
+    // add:  && request.auth.token.admin == true
+    match /characters/{charId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // ── User data collection ───────────────────────────────────────────────
+    // Each user can only read/write their own document.
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // ── Deny everything else ──────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
